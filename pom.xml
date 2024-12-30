@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<maven.compiler.source>21</maven.compiler.source> <!-- Garantindo que o Maven use JDK 21 -->
+		<maven.compiler.target>21</maven.compiler.target> <!-- Garantindo que o Maven use JDK 21 -->
 	</properties>
 	<dependencies>
 		<dependency>
@@ -73,10 +75,14 @@
 
 	<build>
 		<plugins>
+			<!-- Plugin do Maven para compilar o código com JDK 21 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.10.0</version> <!-- Atualizando para a versão que suporta JDK 21 -->
 				<configuration>
+					<source>21</source> <!-- Definindo o source para JDK 21 -->
+					<target>21</target> <!-- Definindo o target para JDK 21 -->
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
@@ -85,6 +91,8 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+
+			<!-- Plugin do Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
