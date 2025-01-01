@@ -9,8 +9,19 @@ public class Payment {
   private UUID id;
   private Order order;
   private String paymentMethod;
-  private String status; // Paid, rejected...
+  private PaymentStatus status;
   private LocalDateTime paymentDate;
+
+  public Payment() {
+  }
+
+  public Payment(UUID id, Order order, String paymentMethod, PaymentStatus status, LocalDateTime paymentDate) {
+    this.id = id;
+    this.order = order;
+    this.paymentMethod = paymentMethod;
+    this.status = status;
+    this.paymentDate = paymentDate;
+  }
 
   public UUID getId() {
     return id;
@@ -36,11 +47,11 @@ public class Payment {
     this.paymentMethod = paymentMethod;
   }
 
-  public String getStatus() {
+  public PaymentStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(PaymentStatus status) {
     this.status = status;
   }
 
