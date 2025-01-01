@@ -1,6 +1,8 @@
 package com.application.API_E_commerce.domain.user;
 
 import com.application.API_E_commerce.domain.address.Address;
+import com.application.API_E_commerce.domain.cart.Cart;
+import com.application.API_E_commerce.domain.order.Order;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,12 +13,28 @@ public class User {
   private String name;
   private String email; // Deve ser validade como email único, e no padrão esperado
   private String password; // Deve ser hash quando for salvar no banco
-  private String role; // Customer ou Admin
+  private UserRole role; // Customer ou Admin
   private LocalDateTime createdAt;
   private LocalDateTime lastLoginAt;
-  private List<String> orders;
-  private List<String> carts;
+  private List<Order> orders;
+  private List<Cart> carts;
   private Address address;
+
+  public User() {
+  }
+
+  public User(UUID id, String name, String email, String password, UserRole role, LocalDateTime createdAt, LocalDateTime lastLoginAt, List<Order> orders, List<Cart> carts, Address address) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+    this.password = password;
+    this.role = role;
+    this.createdAt = createdAt;
+    this.lastLoginAt = lastLoginAt;
+    this.orders = orders;
+    this.carts = carts;
+    this.address = address;
+  }
 
   public UUID getId() {
     return id;
@@ -48,6 +66,30 @@ public class User {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public UserRole getRole() {
+    return role;
+  }
+
+  public void setRole(UserRole role) {
+    this.role = role;
+  }
+
+  public List<Order> getOrders() {
+    return orders;
+  }
+
+  public void setOrders(List<Order> orders) {
+    this.orders = orders;
+  }
+
+  public List<Cart> getCarts() {
+    return carts;
+  }
+
+  public void setCarts(List<Cart> carts) {
+    this.carts = carts;
   }
 
   public LocalDateTime getCreatedAt() {

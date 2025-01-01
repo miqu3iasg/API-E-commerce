@@ -1,6 +1,16 @@
-package com.application.API_E_commerce.adapters.outbound.entities;
+package com.application.API_E_commerce.domain.user;
 
 public enum UserRole {
-  ADMIN("admin"),
-  CUSTOMER("customer")
+  ADMIN_ROLE("admin"),
+  CUSTOMER_ROLE("customer");
+
+  private final String role;
+
+  UserRole (String role) {
+    this.role = role;
+  }
+
+  String getRole () {
+    return role;
+  }
 }
