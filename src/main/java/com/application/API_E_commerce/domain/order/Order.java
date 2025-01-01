@@ -12,7 +12,7 @@ import java.util.UUID;
 public class Order {
   private UUID id;
   private User user;
-  private String status; // pending, payment...
+  private OrderStatus status;
   private LocalDateTime orderDate;
   private BigDecimal totalValue;
   private List<OrderItem> items;
@@ -21,7 +21,7 @@ public class Order {
   public Order() {
   }
 
-  public Order(UUID id, User user, String status, LocalDateTime orderDate, BigDecimal totalValue, List<OrderItem> items, Payment payment) {
+  public Order(UUID id, User user, OrderStatus status, LocalDateTime orderDate, BigDecimal totalValue, List<OrderItem> items, Payment payment) {
     this.id = id;
     this.user = user;
     this.status = status;
@@ -47,11 +47,11 @@ public class Order {
     this.user = user;
   }
 
-  public String getStatus() {
+  public OrderStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(OrderStatus status) {
     this.status = status;
   }
 
