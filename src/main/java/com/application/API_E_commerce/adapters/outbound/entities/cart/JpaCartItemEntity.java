@@ -1,7 +1,6 @@
-package com.application.API_E_commerce.adapters.outbound.entities;
+package com.application.API_E_commerce.adapters.outbound.entities.cart;
 
-import com.application.API_E_commerce.domain.cart.Cart;
-import com.application.API_E_commerce.domain.product.Product;
+import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,18 +13,18 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JpaCartItem {
+public class JpaCartItemEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
   @ManyToOne
   @JoinColumn(name = "cart_id", nullable = false)
-  private Cart cart;
+  private JpaCartEntity cart;
 
   @ManyToOne
   @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  private JpaProductEntity product;
 
   private int quantity;
 }
