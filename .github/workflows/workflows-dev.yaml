@@ -31,6 +31,10 @@ jobs:
       - name: Clean and compile with Maven
         run: mvn clean compile --file pom.xml
 
+      # Ativando o perfil de desenvolvimento antes de executar os testes
+      - name: Run tests with dev profile
+        run: mvn test -Dspring.profiles.active=dev --file pom.xml
+
       # Passo 5: Executar os testes e capturar relatórios
       - name: Run tests
         run: mvn test --file pom.xml
