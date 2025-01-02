@@ -29,20 +29,10 @@ jobs:
 
       # Passo 4: Limpar e compilar o projeto
       - name: Clean and compile with Maven
-        run: mvn clean compile --file pom.xml
+        run: mvn -B package --file pom.xml
 
-      # Passo 5: Executar os testes e capturar relatórios
+      # Passo 5: Executar os testes
       - name: Run tests
-        run: mvn test -X
+        run: mvn test
 
-      # Passo 6: Listar diretórios para depuração
-      - name: List directories
-        run: ls -R target || echo "Target directory not found"
 
-      # Passo 7: Fazer upload dos relatórios Surefire (caso os testes falhem)
-      - name: Upload test reports
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: surefire-reports
-          path: target/surefire-reports
