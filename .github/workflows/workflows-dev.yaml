@@ -28,16 +28,12 @@ jobs:
         run: java -version
 
       # Passo 4: Limpar e compilar o projeto
-      - name: Clean and compile with Maven
-        run: mvn clean compile --file pom.xml
-
-      # Ativando o perfil de desenvolvimento antes de executar os testes
-      - name: Run tests with dev profile
-        run: mvn test -Dspring.profiles.active=dev --file pom.xml
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
 
       # Passo 5: Executar os testes e capturar relatórios
       - name: Run tests
-        run: mvn test --file pom.xml
+        run: mvn test -X
 
       # Passo 6: Listar diretórios para depuração
       - name: List directories
