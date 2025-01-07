@@ -13,6 +13,16 @@ public class Cart {
   private LocalDateTime createdAt;
   private List<CartItem> items;
 
+  public Cart() {
+  }
+
+  public Cart(UUID id, User user, LocalDateTime createdAt, List<CartItem> items) {
+    this.id = id;
+    this.user = user;
+    this.createdAt = createdAt;
+    this.items = items;
+  }
+
   public UUID getId() {
     return id;
   }

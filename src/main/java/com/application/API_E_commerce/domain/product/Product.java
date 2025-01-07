@@ -13,20 +13,20 @@ public class Product {
   private BigDecimal price;
   private int stock;
   private Category category;
-  private String imgUrl;
+  private String imageUrl;
   private LocalDateTime createdAt;
 
   public Product() {
   }
 
-  public Product(UUID id, String name, String description, BigDecimal price, int stock, Category category, String imgUrl, LocalDateTime createdAt) {
+  public Product(UUID id, String name, String description, BigDecimal price, int stock, Category category, String imageUrl, LocalDateTime createdAt) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.price = price;
     this.stock = stock;
     this.category = category;
-    this.imgUrl = imgUrl;
+    this.imageUrl = imageUrl;
     this.createdAt = createdAt;
   }
 
@@ -78,12 +78,12 @@ public class Product {
     this.category = category;
   }
 
-  public String getImgUrl() {
-    return imgUrl;
+  public String getImageUrl() {
+    return imageUrl;
   }
 
-  public void setImgUrl(String imgUrl) {
-    this.imgUrl = imgUrl;
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 
   public LocalDateTime getCreatedAt() {
