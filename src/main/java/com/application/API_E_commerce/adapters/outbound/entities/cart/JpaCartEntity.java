@@ -1,6 +1,7 @@
 package com.application.API_E_commerce.adapters.outbound.entities.cart;
 
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
+import com.application.API_E_commerce.domain.cart.Cart;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +13,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_carts")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaCartEntity {
@@ -28,4 +28,50 @@ public class JpaCartEntity {
 
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaCartItemEntity> items;
+
+  public static JpaCartEntity fromDomain (
+          Cart cartDomain,
+          JpaUserEntity jpaUserEntity,
+          List<JpaCartItemEntity> jpaCartItems
+  ){
+    JpaCartEntity jpaCartEntity = new JpaCartEntity();
+    jpaCartEntity.id = cartDomain.getId();
+    jpaCartEntity.user = jpaUserEntity;
+    jpaCartEntity.createdAt = cartDomain.getCreatedAt();
+    jpaCartEntity.items = jpaCartItems;
+
+    return jpaCartEntity;
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public JpaUserEntity getUser() {
+    return user;
+  }
+
+  public void setUser(JpaUserEntity user) {
+    this.user = user;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public List<JpaCartItemEntity> getItems() {
+    return items;
+  }
+
+  public void setItems(List<JpaCartItemEntity> items) {
+    this.items = items;
+  }
 }

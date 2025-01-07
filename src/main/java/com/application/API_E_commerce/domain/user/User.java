@@ -1,5 +1,6 @@
 package com.application.API_E_commerce.domain.user;
 
+import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.order.Order;
@@ -11,9 +12,9 @@ import java.util.UUID;
 public class User {
   private UUID id;
   private String name;
-  private String email; // Deve ser validade como email único, e no padrão esperado
-  private String password; // Deve ser hash quando for salvar no banco
-  private UserRole role; // Customer ou Admin
+  private String email;
+  private String password;
+  private UserRole role;
   private LocalDateTime createdAt;
   private LocalDateTime lastLoginAt;
   private List<Order> orders;

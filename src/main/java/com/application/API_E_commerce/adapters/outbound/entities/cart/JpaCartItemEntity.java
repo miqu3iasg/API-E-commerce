@@ -10,7 +10,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_cart_items")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaCartItemEntity {
@@ -27,4 +26,36 @@ public class JpaCartItemEntity {
   private JpaProductEntity product;
 
   private int quantity;
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public JpaCartEntity getCart() {
+    return cart;
+  }
+
+  public void setCart(JpaCartEntity cart) {
+    this.cart = cart;
+  }
+
+  public JpaProductEntity getProduct() {
+    return product;
+  }
+
+  public void setProduct(JpaProductEntity product) {
+    this.product = product;
+  }
+
+  public int getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(int quantity) {
+    this.quantity = quantity;
+  }
 }

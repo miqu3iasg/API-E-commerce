@@ -11,7 +11,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_order_items")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaOrderItemEntity {
@@ -30,4 +29,44 @@ public class JpaOrderItemEntity {
   private int quantity;
 
   private BigDecimal unitPrice;
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public JpaOrderEntity getOrder() {
+    return order;
+  }
+
+  public void setOrder(JpaOrderEntity order) {
+    this.order = order;
+  }
+
+  public JpaProductEntity getProduct() {
+    return product;
+  }
+
+  public void setProduct(JpaProductEntity product) {
+    this.product = product;
+  }
+
+  public int getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(int quantity) {
+    this.quantity = quantity;
+  }
+
+  public BigDecimal getUnitPrice() {
+    return unitPrice;
+  }
+
+  public void setUnitPrice(BigDecimal unitPrice) {
+    this.unitPrice = unitPrice;
+  }
 }

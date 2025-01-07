@@ -2,7 +2,11 @@ package com.application.API_E_commerce.adapters.outbound.entities.order;
 
 import com.application.API_E_commerce.adapters.outbound.entities.payment.JpaPaymentEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
+import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderStatus;
+import com.application.API_E_commerce.utils.mappers.OrderMapper;
+import com.application.API_E_commerce.utils.mappers.PaymentMapper;
+import com.application.API_E_commerce.utils.mappers.UserMapper;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +19,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_orders")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaOrderEntity {
@@ -38,4 +41,78 @@ public class JpaOrderEntity {
 
   @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private JpaPaymentEntity payment;
+
+  public static JpaOrderEntity fromDomain (
+          Order orderDomain,
+          JpaUserEntity jpaUserEntity,
+          List<JpaOrderItemEntity> jpaOrderItemEntities,
+          JpaPaymentEntity jpaPaymentEntity
+  ) {
+    JpaOrderEntity jpaOrderEntity = new JpaOrderEntity();
+    jpaOrderEntity.id = orderDomain.getId();
+    jpaOrderEntity.user = jpaUserEntity;
+    jpaOrderEntity.status = orderDomain.getStatus();
+    jpaOrderEntity.orderDate = orderDomain.getOrderDate();
+    jpaOrderEntity.totalValue = orderDomain.getTotalValue();
+    jpaOrderEntity.items = jpaOrderItemEntities;
+    jpaOrderEntity.payment = jpaPaymentEntity;
+
+    return jpaOrderEntity;
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public JpaUserEntity getUser() {
+    return user;
+  }
+
+  public void setUser(JpaUserEntity user) {
+    this.user = user;
+  }
+
+  public OrderStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(OrderStatus status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getOrderDate() {
+    return orderDate;
+  }
+
+  public void setOrderDate(LocalDateTime orderDate) {
+    this.orderDate = orderDate;
+  }
+
+  public BigDecimal getTotalValue() {
+    return totalValue;
+  }
+
+  public void setTotalValue(BigDecimal totalValue) {
+    this.totalValue = totalValue;
+  }
+
+  public List<JpaOrderItemEntity> getItems() {
+    return items;
+  }
+
+  public void setItems(List<JpaOrderItemEntity> items) {
+    this.items = items;
+  }
+
+  public JpaPaymentEntity getPayment() {
+    return payment;
+  }
+
+  public void setPayment(JpaPaymentEntity payment) {
+    this.payment = payment;
+  }
 }
