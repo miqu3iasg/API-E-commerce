@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class JpaOrderConverter {
+public class OrderConverter {
   private final UserMapper userMapper;
   private final OrderItemMapper orderItemMapper;
   private final PaymentMapper paymentMapper;
 
-  public JpaOrderConverter (
+  public OrderConverter(
           UserMapper userMapper,
           PaymentMapper paymentMapper,
           OrderItemMapper orderItemMapper
