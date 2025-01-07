@@ -1,2 +1,71 @@
-package com.application.API_E_commerce.adapters.outbound.repositories;public class UserRepositoryImplementation {
+package com.application.API_E_commerce.adapters.outbound.repositories;
+
+import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
+import com.application.API_E_commerce.domain.user.User;
+import com.application.API_E_commerce.domain.user.UserRepository;
+import com.application.API_E_commerce.utils.converters.UserConverter;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public class UserRepositoryImplementation implements UserRepository {
+
+  private final JpaUserRepository jpaUserRepository;
+  private final UserConverter userConverter;
+
+  public UserRepositoryImplementation(JpaUserRepository jpaUserRepository, UserConverter userConverter) {
+    this.jpaUserRepository = jpaUserRepository;
+    this.userConverter = userConverter;
+  }
+
+  @Override
+  public User saveUser(User user) {
+    JpaUserEntity userEntityToSave = userConverter.toJpa(user);
+
+    JpaUserEntity savedUserEntity = this.jpaUserRepository.save(userEntityToSave);
+
+    return userConverter.toDomain(savedUserEntity);
+  }
+
+  @Override
+  public Optional<User> findUserById(UUID userId) {
+    return Optional.ofNullable(jpaUserRepository.findById(userId)
+            .map(userConverter::toDomain)
+            .orElseThrow(RuntimeException::new));
+  }
+
+  @Override
+  public List<User> findAllUsers() {
+    List<JpaUserEntity> jpaUserEntityList = this.jpaUserRepository.findAll();
+
+    if (jpaUserEntityList.isEmpty()) return Collections.emptyList();
+
+    return jpaUserEntityList
+            .stream()
+            .map(userConverter::toDomain)
+            .toList();
+  }
+
+  @Override
+  public void deleteUser(User user) {
+    JpaUserEntity userEntityToDelete = this.userConverter.toJpa(user);
+
+    this.jpaUserRepository.findById(userEntityToDelete.getId())
+            .map(existingUserEntity -> {
+              this.jpaUserRepository.delete(existingUserEntity);
+              return existingUserEntity;
+            }).orElseThrow(() -> new IllegalArgumentException("User does not exists"));
+
+  }
+
+  @Override
+  public void deleteUserById(UUID userId) {
+    this.jpaUserRepository.findById(userId)
+            .map(userEntity -> {
+              this.jpaUserRepository.deleteById(userId);
+              return userEntity;
+            }).orElseThrow(() -> new IllegalArgumentException("User does not exists"));
+  }
 }
