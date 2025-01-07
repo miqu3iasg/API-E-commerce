@@ -1,4 +1,4 @@
-package com.application.API_E_commerce.utils;
+package com.application.API_E_commerce.utils.email;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
