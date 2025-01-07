@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class JpaCartConverter {
+public class CartConverter {
   private final UserMapper userMapper;
   private final CartItemMapper cartItemMapper;
 
-  public JpaCartConverter (
+  public CartConverter(
           UserMapper userMapper,
           CartItemMapper cartItemMapper
   ) {
