@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tb_payments")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaPaymentEntity {
@@ -29,4 +28,44 @@ public class JpaPaymentEntity {
   private PaymentStatus status;
 
   private LocalDateTime paymentDate;
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public JpaOrderEntity getOrder() {
+    return order;
+  }
+
+  public void setOrder(JpaOrderEntity order) {
+    this.order = order;
+  }
+
+  public String getPaymentMethod() {
+    return paymentMethod;
+  }
+
+  public void setPaymentMethod(String paymentMethod) {
+    this.paymentMethod = paymentMethod;
+  }
+
+  public PaymentStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(PaymentStatus status) {
+    this.status = status;
+  }
+
+  public LocalDateTime getPaymentDate() {
+    return paymentDate;
+  }
+
+  public void setPaymentDate(LocalDateTime paymentDate) {
+    this.paymentDate = paymentDate;
+  }
 }
