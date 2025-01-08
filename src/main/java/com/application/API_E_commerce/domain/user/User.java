@@ -24,7 +24,18 @@ public class User {
   public User() {
   }
 
-  public User(UUID id, String name, String email, String password, UserRole role, LocalDateTime createdAt, LocalDateTime lastLoginAt, List<Order> orders, List<Cart> carts, Address address) {
+  public User (
+    UUID id, 
+    String name, 
+    String email, 
+    String password, 
+    UserRole role, 
+    LocalDateTime createdAt, 
+    LocalDateTime lastLoginAt, 
+    List<Order> orders, 
+    List<Cart> carts, 
+    Address address
+    ) {
     this.id = id;
     this.name = name;
     this.email = email;
