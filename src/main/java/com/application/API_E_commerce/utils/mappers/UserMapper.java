@@ -1,10 +1,8 @@
 package com.application.API_E_commerce.utils.mappers;
 
-import com.application.API_E_commerce.adapters.outbound.entities.address.JpaAddressEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.cart.JpaCartEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
-import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.user.User;

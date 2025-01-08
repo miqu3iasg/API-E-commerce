@@ -2,10 +2,8 @@ package com.application.API_E_commerce.utils.mappers;
 
 import com.application.API_E_commerce.adapters.outbound.entities.cart.JpaCartEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.cart.JpaCartItemEntity;
-import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
-import com.application.API_E_commerce.domain.product.Product;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 

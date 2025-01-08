@@ -7,8 +7,6 @@ import com.application.API_E_commerce.domain.product.Product;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
-import java.util.List;
-
 @Mapper(componentModel = "spring", uses = { CategoryMapper.class })
 public interface ProductMapper {
 

@@ -1,9 +1,7 @@
 package com.application.API_E_commerce.utils.mappers;
 
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderItemEntity;
-import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
-import com.application.API_E_commerce.domain.product.Product;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 

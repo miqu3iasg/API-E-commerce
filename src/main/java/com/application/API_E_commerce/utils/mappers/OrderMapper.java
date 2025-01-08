@@ -1,12 +1,8 @@
 package com.application.API_E_commerce.utils.mappers;
 
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderEntity;
-import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderItemEntity;
-import com.application.API_E_commerce.adapters.outbound.entities.payment.JpaPaymentEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.order.Order;
-import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
-import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.user.User;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
