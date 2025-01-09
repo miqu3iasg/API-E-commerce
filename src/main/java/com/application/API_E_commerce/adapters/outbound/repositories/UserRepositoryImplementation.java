@@ -4,12 +4,14 @@ import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEnt
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRepository;
 import com.application.API_E_commerce.utils.converters.UserConverter;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 public class UserRepositoryImplementation implements UserRepository {
 
   private final JpaUserRepository jpaUserRepository;
@@ -33,7 +35,14 @@ public class UserRepositoryImplementation implements UserRepository {
   public Optional<User> findUserById(UUID userId) {
     return Optional.ofNullable(jpaUserRepository.findById(userId)
             .map(userConverter::toDomain)
-            .orElseThrow(RuntimeException::new));
+            .orElseThrow(() -> new IllegalArgumentException("User was not found when searching for id in the repository.")));
+  }
+
+  @Override
+  public Optional<User> findUserByName(String username) {
+    return Optional.ofNullable(jpaUserRepository.findUserByName(username)
+            .map(userConverter::toDomain)
+            .orElseThrow(() -> new IllegalArgumentException("User was not found when searching for name in the repository.")));
   }
 
   @Override
@@ -56,7 +65,7 @@ public class UserRepositoryImplementation implements UserRepository {
             .map(existingUserEntity -> {
               this.jpaUserRepository.delete(existingUserEntity);
               return existingUserEntity;
-            }).orElseThrow(() -> new IllegalArgumentException("User does not exists"));
+            }).orElseThrow(() -> new IllegalArgumentException("User was not found when searching for id in the deleteUser method."));
 
   }
 
@@ -66,6 +75,13 @@ public class UserRepositoryImplementation implements UserRepository {
             .map(userEntity -> {
               this.jpaUserRepository.deleteById(userId);
               return userEntity;
-            }).orElseThrow(() -> new IllegalArgumentException("User does not exists"));
+            }).orElseThrow(() -> new IllegalArgumentException("User was not found when searching for id in the deleteById method."));
+  }
+
+  @Override
+  public Optional<User> findUserByEmail(String email) {
+    return Optional.ofNullable(this.jpaUserRepository.findUserByEmail(email)
+            .map(userConverter::toDomain)
+            .orElseThrow(() -> new IllegalArgumentException("User was not found when searching for email in the repository.")));
   }
 }
