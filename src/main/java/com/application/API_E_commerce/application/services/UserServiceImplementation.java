@@ -60,8 +60,9 @@ public class UserServiceImplementation implements UserUseCases {
     this.userRepository.findUserById(userId)
             .map(existingUser -> {
               existingUser.setName(updatedNameRequest);
-              return this.userRepository.saveUser(existingUser);
-            }).orElseThrow(() -> new IllegalStateException("Cannot update the name because the user was not found."));
+              this.userRepository.saveUser(existingUser);
+              return existingUser;
+            }).orElseThrow(() -> new IllegalArgumentException("Cannot update the name because the user was not found."));
   }
 
   @Override
@@ -69,8 +70,9 @@ public class UserServiceImplementation implements UserUseCases {
     this.userRepository.findUserById(userId)
             .map(existingUser -> {
               existingUser.setPassword(updatedPasswordRequest);
-              return this.userRepository.saveUser(existingUser);
-            }).orElseThrow(() -> new IllegalStateException("Cannot update the password because the user was not found."));
+              this.userRepository.saveUser(existingUser);
+              return existingUser;
+            }).orElseThrow(() -> new IllegalArgumentException("Cannot update the password because the user was not found."));
   }
 
   @Override
@@ -83,10 +85,10 @@ public class UserServiceImplementation implements UserUseCases {
               existingUser.getAddress().setZipCode(updatedAddressRequest.zipCode());
               existingUser.getAddress().setCountry(updatedAddressRequest.country());
 
-              var updatedUser = this.userRepository.saveUser(existingUser);
+              this.userRepository.saveUser(existingUser);
 
-              return updatedUser.getAddress();
-            }).orElseThrow(() -> new IllegalStateException("Cannot update the address because the user was not found."));
+              return existingUser.getAddress();
+            }).orElseThrow(() -> new IllegalArgumentException("Cannot update the address because the user was not found."));
   }
 
   @Override
