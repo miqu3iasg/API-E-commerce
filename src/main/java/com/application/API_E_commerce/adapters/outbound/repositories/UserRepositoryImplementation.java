@@ -2,7 +2,7 @@ package com.application.API_E_commerce.adapters.outbound.repositories;
 
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.user.User;
-import com.application.API_E_commerce.domain.user.UserRepository;
+import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import com.application.API_E_commerce.utils.converters.UserConverter;
 import org.springframework.stereotype.Component;
 
@@ -51,10 +51,7 @@ public class UserRepositoryImplementation implements UserRepository {
 
     if (jpaUserEntityList.isEmpty()) return Collections.emptyList();
 
-    return jpaUserEntityList
-            .stream()
-            .map(userConverter::toDomain)
-            .toList();
+    return jpaUserEntityList.stream().map(userConverter::toDomain).toList();
   }
 
   @Override
@@ -72,9 +69,9 @@ public class UserRepositoryImplementation implements UserRepository {
   @Override
   public void deleteUserById(UUID userId) {
     this.jpaUserRepository.findById(userId)
-            .map(userEntity -> {
+            .map(existingUserEntity -> {
               this.jpaUserRepository.deleteById(userId);
-              return userEntity;
+              return existingUserEntity;
             }).orElseThrow(() -> new IllegalArgumentException("User was not found when searching for id in the deleteById method."));
   }
 
