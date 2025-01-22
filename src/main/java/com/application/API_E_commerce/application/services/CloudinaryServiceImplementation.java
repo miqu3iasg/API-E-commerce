@@ -11,10 +11,10 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class CloudinaryService {
+public class CloudinaryServiceImplementation {
   private final Cloudinary cloudinary;
 
-  public CloudinaryService() {
+  public CloudinaryServiceImplementation() {
     Dotenv dotenv = Dotenv.configure().load();
 
     String cloudinaryUrl = dotenv.get("CLOUDINARY_URL");
@@ -23,7 +23,7 @@ public class CloudinaryService {
       throw new IllegalArgumentException("CLOUDINARY_URL is not set in the environment variables.");
     }
 
-    this.cloudinary = new Cloudinary(cloudinaryUrl); // erro aqui: Illegal character in authority at index 13: cloudinary://<722711591888539>:<avopkYNtPcFCKhpqFg9eDB3IQeM>@dbo8nfor3
+    this.cloudinary = new Cloudinary(cloudinaryUrl);
   }
 
   public void uploadToImageCloudinary(String imageUrl, String imageName) throws IOException {
