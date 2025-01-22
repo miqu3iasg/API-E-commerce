@@ -1,7 +1,9 @@
 package com.application.API_E_commerce.adapters.outbound.entities.product;
 
 import com.application.API_E_commerce.adapters.outbound.entities.category.JpaCategoryEntity;
+import com.application.API_E_commerce.domain.product.Product;
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +16,7 @@ import java.util.UUID;
 @Table(name = "tb_products")
 @AllArgsConstructor
 @NoArgsConstructor
-public class JpaProductEntity {
+public class  JpaProductEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
@@ -27,13 +29,16 @@ public class JpaProductEntity {
 
   private int stock;
 
-  @ManyToOne
-  @JoinColumn(name = "category_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @JoinColumn(name = "category_id", nullable = true)
   private JpaCategoryEntity category;
 
   private String imageUrl;
 
   private LocalDateTime createdAt;
+
+  @Version
+  private long version;
 
   public UUID getId() {
     return id;
@@ -97,5 +102,32 @@ public class JpaProductEntity {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
+  }
+
+  @Transactional
+  public static JpaProductEntity fromDomain(Product productDomain, JpaCategoryEntity jpaCategoryEntity) {
+    JpaProductEntity jpaProductEntity = new JpaProductEntity();
+
+    if (productDomain.getId() != null) {
+      jpaProductEntity.id = productDomain.getId();
+    }
+
+    jpaProductEntity.name = productDomain.getName();
+    jpaProductEntity.description = productDomain.getDescription();
+    jpaProductEntity.price = productDomain.getPrice();
+    jpaProductEntity.stock = productDomain.getStock();
+    jpaProductEntity.category = jpaCategoryEntity;
+    jpaProductEntity.imageUrl = productDomain.getImageUrl();
+    jpaProductEntity.createdAt = productDomain.getCreatedAt();
+
+    return jpaProductEntity;
   }
 }
