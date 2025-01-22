@@ -1,11 +1,14 @@
 package com.application.API_E_commerce.adapters.outbound.entities.category;
 
 import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
+import com.application.API_E_commerce.domain.category.Category;
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +26,10 @@ public class JpaCategoryEntity {
   private String description;
 
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<JpaProductEntity> products;
+  private List<JpaProductEntity> products = new ArrayList<>();
+
+  @Version
+  private long version;
 
   public UUID getId() {
     return id;
@@ -55,5 +61,23 @@ public class JpaCategoryEntity {
 
   public void setProducts(List<JpaProductEntity> products) {
     this.products = products;
+  }
+
+  @Transactional
+  public static JpaCategoryEntity fromDomain(
+          Category categoryDomain,
+          List<JpaProductEntity> jpaProductEntityList
+  ) {
+    JpaCategoryEntity jpaCategoryEntity = new JpaCategoryEntity();
+
+    if (categoryDomain.getId() != null) {
+      jpaCategoryEntity.setId(categoryDomain.getId());
+    }
+
+    jpaCategoryEntity.name = categoryDomain.getName();
+    jpaCategoryEntity.description = categoryDomain.getDescription();
+    jpaCategoryEntity.products = jpaProductEntityList;
+
+    return jpaCategoryEntity;
   }
 }
