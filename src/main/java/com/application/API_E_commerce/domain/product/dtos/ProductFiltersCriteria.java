@@ -1,14 +1,17 @@
-package com.application.API_E_commerce.domain.product;
+package com.application.API_E_commerce.domain.product.dtos;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public class ProductFiltersRequestDTO {
-  String name;
-  String description;
-  BigDecimal minPrice;
-  BigDecimal maxPrice;
-  UUID categoryId;
+public class ProductFiltersCriteria {
+  private String name;
+  private String description;
+  private BigDecimal minPrice;
+  private BigDecimal maxPrice;
+  private UUID categoryId;
+
+  public ProductFiltersCriteria() {
+  }
 
   public String getName() {
     return name;

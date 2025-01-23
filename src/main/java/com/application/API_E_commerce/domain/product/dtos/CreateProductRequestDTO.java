@@ -1,4 +1,11 @@
 package com.application.API_E_commerce.domain.product.dtos;
 
-public record CreateProductRequestDTO() {
+import java.math.BigDecimal;
+
+public record CreateProductRequestDTO(
+        String name,
+        String description,
+        BigDecimal price,
+        int stock
+) {
 }
