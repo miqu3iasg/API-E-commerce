@@ -7,6 +7,8 @@ import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
+import com.application.API_E_commerce.factory.JpaAddressEntityFactory;
+import com.application.API_E_commerce.factory.UserFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,51 +39,22 @@ class UserConverterTest {
   @Test
   @DisplayName("Should convert User to JpaUser correctly")
   void shouldConvertUserToJpaUser () {
-    UUID userId = UUID.randomUUID();
-    String username = "Jhon";
-    String email = "jhon@gmail.com";
-    String password = "12345";
-    UserRole role = UserRole.CUSTOMER_ROLE;
-    LocalDateTime createdAt = LocalDateTime.now();
-    LocalDateTime lastLoginAt = LocalDateTime.now().plusHours(1);
-    List<Order> orders = new ArrayList<>();
-    List<Cart> carts = new ArrayList<>();
+    User user = UserFactory.build();
 
-    Address address = new Address(UUID.randomUUID(), "street", "city", "state", "zipCode", "country");
+    JpaAddressEntity jpaAddressEntity = JpaAddressEntityFactory.build(user.getAddress());
 
-    User user = new User (
-            userId,
-            username,
-            email,
-            password,
-            role,
-            createdAt,
-            lastLoginAt,
-            orders,
-            carts,
-            address
-    );
-
-    JpaAddressEntity jpaAddressEntity = new JpaAddressEntity();
-    jpaAddressEntity.setId(address.getId());
-    jpaAddressEntity.setStreet(address.getStreet());
-    jpaAddressEntity.setCity(address.getCity());
-    jpaAddressEntity.setState(address.getState());
-    jpaAddressEntity.setZipCode(address.getZipCode());
-    jpaAddressEntity.setCountry(address.getCountry());
-
-    Mockito.when(addressConverter.toJpa(address)).thenReturn(jpaAddressEntity);
+    Mockito.when(addressConverter.toJpa(user.getAddress())).thenReturn(jpaAddressEntity);
 
     JpaUserEntity convertedEntity = userConverter.toJpa(user);
 
     assertNotNull(convertedEntity, "JpaUser should not be null");
-    assertEquals(userId, convertedEntity.getId(), "User ID should be the same");
-    assertEquals(username, convertedEntity.getName(), "Username should be the same");
-    assertEquals(email, convertedEntity.getEmail(), "Email should be the same");
-    assertEquals(password, convertedEntity.getPassword(), "Password should be the same");
-    assertEquals(role.name(), convertedEntity.getRole().name(), "Role should be converted to String");
-    assertEquals(createdAt, convertedEntity.getCreatedAt(), "CreatedAt should be the same");
-    assertEquals(lastLoginAt, convertedEntity.getLastLoginAt(), "LastLoginAt should be the same");
-    assertEquals(address.getId(), convertedEntity.getAddress().getId(), "Address ID should be the same");
+    assertEquals(user.getId(), convertedEntity.getId(), "User ID should be the same");
+    assertEquals(user.getName(), convertedEntity.getName(), "Username should be the same");
+    assertEquals(user.getEmail(), convertedEntity.getEmail(), "Email should be the same");
+    assertEquals(user.getPassword(), convertedEntity.getPassword(), "Password should be the same");
+    assertEquals(user.getRole().name(), convertedEntity.getRole().name(), "Role should be converted to String");
+    assertEquals(user.getCreatedAt(), convertedEntity.getCreatedAt(), "CreatedAt should be the same");
+    assertEquals(user.getLastLoginAt(), convertedEntity.getLastLoginAt(), "LastLoginAt should be the same");
+    assertEquals(user.getAddress().getId(), convertedEntity.getAddress().getId(), "Address ID should be the same");
   }
 }
