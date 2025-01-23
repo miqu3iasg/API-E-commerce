@@ -4,7 +4,7 @@ import com.application.API_E_commerce.application.usecases.UserUseCases;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.address.dtos.UpdateAddressRequestDTO;
 import com.application.API_E_commerce.domain.user.User;
-import com.application.API_E_commerce.domain.user.UserRepository;
+import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import com.application.API_E_commerce.domain.user.dtos.CreateUserRequestDTO;
 import org.springframework.stereotype.Service;
 
