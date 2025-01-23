@@ -1,14 +1,10 @@
 package com.application.API_E_commerce.adapters.outbound.repositories;
 
-import com.application.API_E_commerce.adapters.outbound.entities.category.JpaCategoryEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.ProductFiltersCriteria;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import com.application.API_E_commerce.utils.converters.CategoryConverter;
 import com.application.API_E_commerce.utils.converters.ProductConverter;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
