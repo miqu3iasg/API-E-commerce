@@ -15,6 +15,7 @@ public class Product {
   private Category category;
   private String imageUrl;
   private LocalDateTime createdAt;
+  private long version = 0;
 
   public Product() {
   }
@@ -92,5 +93,13 @@ public class Product {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
   }
 }
