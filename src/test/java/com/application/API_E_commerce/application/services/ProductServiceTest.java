@@ -1,33 +1,26 @@
 package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.ProductUseCases;
-import com.application.API_E_commerce.domain.category.Category;
 import com.application.API_E_commerce.domain.category.CategoryRepository;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import com.application.API_E_commerce.factory.CategoryFactory;
-import com.application.API_E_commerce.utils.validators.CategoryValidator;
-import com.application.API_E_commerce.utils.validators.ProductValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ActiveProfiles("test")
 @SpringBootTest
-class ProductServiceIntegrationTest {
+class ProductServiceTest {
 
   @Autowired
   private ProductRepository productRepository;
@@ -71,14 +64,37 @@ class ProductServiceIntegrationTest {
   }
 
   @Nested
-  class UpdateProduct {
+  class ListProduct {
     @Test
-    void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist() {}
+    @DisplayName("Should return a list of product images when the product exists")
+    void shouldReturnListOfProductImagesWhenProductExists() {}
+  }
 
+  @Nested
+  class UpdateProduct {
+
+    @Test
+    @DisplayName("Should update the product details when the product exists")
+    void shouldUpdateProductDetailsWhenProductExists() {}
+
+    @Test
+    @DisplayName("Should update the product stock after a sale when the product exists")
+    void shouldUpdateProductStockAfterSaleWhenProductExists() {}
   }
 
   @Nested
   class ProductCategory {
 
+    @Test
+    @DisplayName("Should associate a product to a category when both product and category exist")
+    void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist() {}
+
+    @Test
+    @DisplayName("Should return the product category when the product exists")
+    void shouldReturnProductCategoryWhenProductExists() {}
+
+    @Test
+    @DisplayName("Should remove the product from the category when both product and category exist")
+    void shouldRemoveProductFromCategoryWhenProductAndCategoryExist() {}
   }
 }
