@@ -2,6 +2,7 @@ package com.application.API_E_commerce.domain.category;
 
 import com.application.API_E_commerce.domain.product.Product;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +10,7 @@ public class Category {
   private UUID id;
   private String name;
   private String description;
-  private List<Product> products;
+  private List<Product> products = new ArrayList<>();
 
   public Category() {
   }
