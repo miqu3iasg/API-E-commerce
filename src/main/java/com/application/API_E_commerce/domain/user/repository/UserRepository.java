@@ -1,4 +1,6 @@
-package com.application.API_E_commerce.domain.user;
+package com.application.API_E_commerce.domain.user.repository;
+
+import com.application.API_E_commerce.domain.user.User;
 
 import java.util.List;
 import java.util.Optional;
