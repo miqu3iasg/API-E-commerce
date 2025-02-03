@@ -185,6 +185,7 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   public List<Product> filterProducts(ProductFiltersCriteria criteria) {
-    return List.of();
+    if (criteria == null) throw new IllegalArgumentException("The parameters can't be null.");
+    return this.productRepository.filterProducts(criteria);
   }
 }
