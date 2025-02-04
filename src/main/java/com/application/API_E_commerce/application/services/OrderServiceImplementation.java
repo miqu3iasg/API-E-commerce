@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImplementation implements OrderUseCases {
@@ -113,16 +112,23 @@ public class OrderServiceImplementation implements OrderUseCases {
 
   @Override
   public OrderStatus getOrderStatus(UUID orderId) {
-    return null;
+    Optional<Order> existingOrder = this.orderRepository.findOrderById(orderId);
+
+    if (existingOrder.isEmpty()) throw new IllegalArgumentException("Order cannot be null.");
+
+    return existingOrder.get().getStatus();
   }
 
   @Override
   public Optional<Order> findOrderById(UUID orderId) {
-    return Optional.empty();
+    return this.orderRepository.findOrderById(orderId);
   }
 
   @Override
   public void cancelOrder(UUID orderId) {
-
+    this.orderRepository.findOrderById(orderId).map(existingOrder -> {
+      orderRepository.deleteOrder(orderId);
+      return existingOrder;
+    }).orElseThrow(() -> new IllegalArgumentException("Order cannot be null."));
   }
 }
