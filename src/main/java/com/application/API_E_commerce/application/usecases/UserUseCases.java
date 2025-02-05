@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserUseCases {
-  void createUser(CreateUserRequestDTO createUserRequest);
+  User createUser(CreateUserRequestDTO createUserRequest);
   Optional<User> findUserById(UUID userId);
   void updateUserName(UUID userId, String updatedNameRequest);
   void updatedUserPassword(UUID userId, String updatedPasswordRequest);
