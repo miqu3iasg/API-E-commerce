@@ -2,6 +2,7 @@ package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.OrderUseCases;
 import com.application.API_E_commerce.application.usecases.PaymentUseCases;
+import com.application.API_E_commerce.application.usecases.ProductUseCases;
 import com.application.API_E_commerce.application.usecases.UserUseCases;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
@@ -27,23 +28,22 @@ import java.util.UUID;
 public class OrderServiceImplementation implements OrderUseCases {
   private final OrderRepository orderRepository;
   private final UserUseCases userService;
-  private final ProductRepository productRepository;
+  private final ProductUseCases productService;
   private final PaymentUseCases paymentService;
 
   public OrderServiceImplementation(
           OrderRepository orderRepository,
-          UserUseCases userService,
-          ProductRepository productRepository,
+          UserUseCases userService, ProductUseCases productService,
           PaymentUseCases paymentService
   ) {
     this.orderRepository = orderRepository;
     this.userService = userService;
-    this.productRepository = productRepository;
+    this.productService = productService;
     this.paymentService = paymentService;
   }
 
   @Override
-  @Transactional
+  @Transactional(rollbackOn = Exception.class)
   public Order createOrderCheckout(CreateOrderCheckoutDTO createOrderCheckoutRequest) {
     validateCreateOrderCheckoutRequest(createOrderCheckoutRequest);
 
@@ -68,6 +68,12 @@ public class OrderServiceImplementation implements OrderUseCases {
 
     Payment payment = processPayment(createOrderCheckoutRequest.payment(), order);
 
+    orderItems.forEach(item -> {
+      Product product = item.getProduct();
+      productService.updateStockAfterSale(product.getId(), item.getQuantity());
+      product.setStock(item.getProduct().getStock() - item.getQuantity());
+    });
+
     order.setPayment(payment);
 
     return orderRepository.saveOrder(order);
@@ -86,7 +92,7 @@ public class OrderServiceImplementation implements OrderUseCases {
   }
 
   private void validateProduct(Product product) {
-    if (product == null || productRepository.findProductById(product.getId()).isEmpty()) {
+    if (product == null || productService.findProductById(product.getId()).isEmpty()) {
       throw new IllegalArgumentException("Invalid product");
     }
   }
