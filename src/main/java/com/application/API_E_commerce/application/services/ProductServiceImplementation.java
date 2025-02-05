@@ -9,6 +9,7 @@ import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDT
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.utils.validators.CategoryValidator;
 import com.application.API_E_commerce.utils.validators.ProductValidator;
+import com.cloudinary.utils.StringUtils;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -130,11 +131,10 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   @Transactional
-  public void uploadProductImage(UUID productId, String imageUrl, String imageName) throws IOException {
-
-    this.uploadImageToCloudinary(imageUrl, imageName);
-
+  public void uploadProductImage(UUID productId, String imageUrl) throws IOException {
     Product product = this.fetchExistingProduct(productId);
+
+    this.uploadImageToCloudinary(imageUrl, productId);
 
     product.setImageUrl(imageUrl);
 
@@ -142,10 +142,10 @@ public class ProductServiceImplementation implements ProductUseCases {
   }
 
   @Transactional
-  private void uploadImageToCloudinary(String imageUrl, String imageName) throws IOException {
+  private void uploadImageToCloudinary(String imageUrl, UUID productId) throws IOException {
     try {
-      this.cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, imageName);
-      log.info("Image successfully uploaded to Cloudinary with name: {}", imageName);
+      this.cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, productId);
+      log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
     } catch (IOException exception) {
       log.error("Error uploading image to Cloudinary: {}", exception.getMessage());
       throw exception;
@@ -159,8 +159,21 @@ public class ProductServiceImplementation implements ProductUseCases {
   }
 
   @Override
-  public void deleteProductImage(UUID productId, String imageUrl) {
-    // Definir a melhor abordagem para a implementação desse método
+  @Transactional(rollbackOn = Exception.class)
+  public void deleteProductImage(UUID productId) throws IOException {
+    Product product = this.fetchExistingProduct(productId);
+
+    if (product.getImageUrl() == null || StringUtils.isEmpty(product.getImageUrl())) {
+      throw new IllegalArgumentException("Product image was not found.");
+    }
+
+    this.cloudinaryServiceImplementation.deleteImageFromCloudinary(productId);
+
+    product.setImageUrl(null);
+
+    productRepository.saveProduct(product);
+
+    log.info("Image removed from product {} and deleted from Cloudinary.", productId);
   }
 
   @Override
