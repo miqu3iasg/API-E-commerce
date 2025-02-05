@@ -31,8 +31,6 @@ public class DeleteImageFromCloudinaryIntegrationTest {
   @Autowired
   private CloudinaryServiceImplementation cloudinaryService;
 
-  private static final String IMAGE_NAME = "test-image";
-
   @Test
   void shouldDeleteImageFromCloudinaryWithPublicIdSuccessfully() throws IOException {
     CreateProductRequestDTO createProductRequest = new CreateProductRequestDTO(
@@ -48,18 +46,16 @@ public class DeleteImageFromCloudinaryIntegrationTest {
 
     String imageUrl = "https://media.istockphoto.com/id/496603666/pt/vetorial/%C3%ADcone-plana-verifica%C3%A7%C3%A3o.jpg?s=612x612&w=0&k=20&c=59xwMZUHiaI53N1ouEYGjVsdbanq4iXqiU_MppilZ7M=";
 
-    String uploadedImageUrl = cloudinaryService.uploadToImageCloudinary(imageUrl, IMAGE_NAME);
-    productService.uploadProductImage(productId, uploadedImageUrl, IMAGE_NAME);
+    String uploadedImageUrl = cloudinaryService.uploadToImageCloudinary(imageUrl, productId);
+    productService.uploadProductImage(productId, imageUrl);
 
     Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
     assertNotNull(updatedProduct.getImageUrl(), "The url was not save.");
     assertEquals(uploadedImageUrl, updatedProduct.getImageUrl());
 
-    productService.deleteProductImage(productId, uploadedImageUrl);
+    productService.deleteProductImage(productId);
 
     Product finalProduct = productRepository.findProductById(productId).orElseThrow();
     assertNull(finalProduct.getImageUrl(), "Url is present in database.");
-
-    assertThrows(IOException.class, () -> cloudinaryService.deleteImageFromCloudinary(uploadedImageUrl));
   }
 }
