@@ -22,7 +22,7 @@ public class UserServiceImplementation implements UserUseCases {
   }
 
   @Override
-  public void createUser(CreateUserRequestDTO createUserRequest) {
+  public User createUser(CreateUserRequestDTO createUserRequest) {
     this.validateUserUniqueness(createUserRequest);
 
     User user = new User();
@@ -33,7 +33,7 @@ public class UserServiceImplementation implements UserUseCases {
     user.setAddress(createUserRequest.address());
     user.setCreatedAt(LocalDateTime.now());
 
-    this.userRepository.saveUser(user);
+    return this.userRepository.saveUser(user);
   }
 
   private void validateUserUniqueness(CreateUserRequestDTO createUserRequest) {
