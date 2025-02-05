@@ -1,19 +1,10 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.adapters.outbound.repositories.CategoryRepositoryImplementation;
-import com.application.API_E_commerce.adapters.outbound.repositories.ProductRepositoryImplementation;
 import com.application.API_E_commerce.application.usecases.ProductUseCases;
-import com.application.API_E_commerce.domain.category.Category;
-import com.application.API_E_commerce.domain.category.CategoryRepository;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import com.application.API_E_commerce.factory.CategoryFactory;
-import com.application.API_E_commerce.factory.ProductFactory;
-import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ActiveProfiles("test")
 @SpringBootTest
-public class CloudinaryIntegrationTest {
+public class UploadImageToCloudinaryIntegrationTest {
 
   @Autowired
   private ProductRepository productRepository;
@@ -48,9 +39,8 @@ public class CloudinaryIntegrationTest {
 
     UUID productId = product.getId();
     String testImageUrl = "https://media.istockphoto.com/id/496603666/pt/vetorial/%C3%ADcone-plana-verifica%C3%A7%C3%A3o.jpg?s=612x612&w=0&k=20&c=59xwMZUHiaI53N1ouEYGjVsdbanq4iXqiU_MppilZ7M=";
-    String testImageName = "test-image";
 
-    this.productService.uploadProductImage(productId, testImageUrl, testImageName);
+    this.productService.uploadProductImage(productId, testImageUrl);
 
     Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
     assertNotNull(updatedProduct.getImageUrl(), "Image URL should be updated");
