@@ -21,6 +21,12 @@ public class Order {
   public Order() {
   }
 
+  public Order(User user, List<OrderItem> items, Payment payment) {
+    this.user = user;
+    this.items = items;
+    this.payment = payment;
+  }
+
   public Order(UUID id, User user, OrderStatus status, LocalDateTime orderDate, BigDecimal totalValue, List<OrderItem> items, Payment payment) {
     this.id = id;
     this.user = user;
