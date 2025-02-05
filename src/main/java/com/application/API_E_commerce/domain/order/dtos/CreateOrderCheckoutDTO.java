@@ -7,5 +7,5 @@ import com.application.API_E_commerce.domain.user.User;
 
 import java.util.List;
 
-public record CreateOrderCheckoutDTO(User user, OrderStatus orderStatus, List<OrderItem> items, Payment payment) {
+public record CreateOrderCheckoutDTO(User user, List<OrderItem> items, Payment payment) {
 }
