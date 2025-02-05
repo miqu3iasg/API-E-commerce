@@ -22,9 +22,9 @@ public interface ProductUseCases {
   Category getProductCategory(UUID productId);
   void removeProductFromCategory(UUID productId);
 
-  void uploadProductImage(UUID productId, String imageUrl, String fileName) throws IOException;
+  void uploadProductImage(UUID productId, String imageUrl) throws IOException;
   List<String> getProductImages(UUID productId);
-  void deleteProductImage(UUID productId, String imageUrl);
+  void deleteProductImage(UUID productId) throws IOException;
 
   void updateStockAfterSale(UUID productId, int quantitySold);
   int getProductStock(UUID productId);
