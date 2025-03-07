@@ -11,15 +11,17 @@ public class Cart {
   private UUID id;
   private User user;
   private LocalDateTime createdAt;
+  private CartStatus cartStatus;
   private List<CartItem> items;
 
   public Cart() {
   }
 
-  public Cart(UUID id, User user, LocalDateTime createdAt, List<CartItem> items) {
+  public Cart(UUID id, User user, LocalDateTime createdAt, CartStatus cartStatus, List<CartItem> items) {
     this.id = id;
     this.user = user;
     this.createdAt = createdAt;
+    this.cartStatus = cartStatus;
     this.items = items;
   }
 
@@ -45,6 +47,14 @@ public class Cart {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public CartStatus getCartStatus() {
+    return cartStatus;
+  }
+
+  public void setCartStatus(CartStatus cartStatus) {
+    this.cartStatus = cartStatus;
   }
 
   public List<CartItem> getItems() {

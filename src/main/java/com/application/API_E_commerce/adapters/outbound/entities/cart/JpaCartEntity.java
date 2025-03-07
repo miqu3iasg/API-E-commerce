@@ -2,6 +2,7 @@ package com.application.API_E_commerce.adapters.outbound.entities.cart;
 
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.cart.Cart;
+import com.application.API_E_commerce.domain.cart.CartStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,8 @@ public class JpaCartEntity {
   private JpaUserEntity user;
 
   private LocalDateTime createdAt;
+
+  private CartStatus cartStatus;
 
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaCartItemEntity> items;
@@ -65,6 +68,14 @@ public class JpaCartEntity {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public CartStatus getCartStatus() {
+    return cartStatus;
+  }
+
+  public void setCartStatus(CartStatus cartStatus) {
+    this.cartStatus = cartStatus;
   }
 
   public List<JpaCartItemEntity> getItems() {
