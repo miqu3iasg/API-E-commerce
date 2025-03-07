@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = { ProductMapper.class })
 public interface OrderItemMapper {
@@ -35,13 +36,13 @@ public interface OrderItemMapper {
   default List<JpaOrderItemEntity> orderItemsToJpa(List<OrderItem> items) {
     return items == null
             ? null
-            : items.stream().map(OrderItemMapper.INSTANCE::toJpa).toList();
+            : items.stream().map(OrderItemMapper.INSTANCE::toJpa).collect(Collectors.toList());
   }
 
   @Named("orderItemsToDomain")
   default List<OrderItem> orderItemsToDomain(List<JpaOrderItemEntity> items) {
     return items == null
             ? null
-            : items.stream().map(OrderItemMapper.INSTANCE::toDomain).toList();
+            : items.stream().map(OrderItemMapper.INSTANCE::toDomain).collect(Collectors.toList());
   }
 }

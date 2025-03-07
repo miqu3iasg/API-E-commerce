@@ -10,6 +10,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = { UserMapper.class, CartItemMapper.class })
 public interface CartMapper {
@@ -46,13 +47,13 @@ public interface CartMapper {
   default List<JpaCartItemEntity> cartItemsToJpa(List<CartItem> items) {
     return items == null
             ? null
-            : items.stream().map(CartItemMapper.INSTANCE::toJpa).toList();
+            : items.stream().map(CartItemMapper.INSTANCE::toJpa).collect(Collectors.toList());
   }
 
   @Named("cartItemsToDomain")
   default List<CartItem> cartItemsToDomain(List<JpaCartItemEntity> items) {
     return items == null
             ? null
-            : items.stream().map(CartItemMapper.INSTANCE::toDomain).toList();
+            : items.stream().map(CartItemMapper.INSTANCE::toDomain).collect(Collectors.toList());
   }
 }

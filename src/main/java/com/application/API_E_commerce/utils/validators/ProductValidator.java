@@ -1,14 +1,8 @@
 package com.application.API_E_commerce.utils.validators;
 
-import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
-import com.application.API_E_commerce.adapters.outbound.repositories.JpaProductRepository;
-import com.application.API_E_commerce.adapters.outbound.repositories.ProductRepositoryImplementation;
-import com.application.API_E_commerce.application.usecases.CategoryUseCases;
-import com.application.API_E_commerce.domain.category.Category;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import com.application.API_E_commerce.utils.converters.ProductConverter;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

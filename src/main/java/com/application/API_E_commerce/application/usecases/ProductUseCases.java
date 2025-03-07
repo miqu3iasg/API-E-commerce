@@ -18,11 +18,11 @@ public interface ProductUseCases {
   void updateProduct(UUID productId, UpdateProductRequestDTO updatedProductRequest);
   void deleteProduct(UUID productId);
 
-  void associateProductToCategory(UUID productId, UUID categoryId);
+  Product associateProductToCategory(UUID productId, UUID categoryId);
   Category getProductCategory(UUID productId);
-  void removeProductFromCategory(UUID productId);
+  Product removeProductFromCategory(UUID productId);
 
-  void uploadProductImage(UUID productId, String imageUrl) throws IOException;
+  void uploadProductImage(UUID productId, List<String> imagesUrl) throws IOException;
   List<String> getProductImages(UUID productId);
   void deleteProductImage(UUID productId) throws IOException;
 
