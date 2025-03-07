@@ -4,7 +4,7 @@ import com.application.API_E_commerce.domain.category.Category;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 public class Product {
   private UUID id;
@@ -13,22 +13,35 @@ public class Product {
   private BigDecimal price;
   private int stock;
   private Category category;
-  private String imageUrl;
+  private List<String> imagesUrl = new ArrayList<>();
   private LocalDateTime createdAt;
   private long version = 0;
 
   public Product() {
   }
 
-  public Product(UUID id, String name, String description, BigDecimal price, int stock, Category category, String imageUrl, LocalDateTime createdAt) {
+  public Product(UUID id, String name, String description, BigDecimal price, int stock, Category category, List<String> imagesUrl, LocalDateTime createdAt) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.price = price;
     this.stock = stock;
     this.category = category;
-    this.imageUrl = imageUrl;
+    this.imagesUrl = imagesUrl;
     this.createdAt = createdAt;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Product product = (Product) o;
+    return Objects.equals(id, product.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 
   public UUID getId() {
@@ -79,12 +92,12 @@ public class Product {
     this.category = category;
   }
 
-  public String getImageUrl() {
-    return imageUrl;
+  public List<String> getImagesUrl() {
+    return imagesUrl == null ? Collections.emptyList() : imagesUrl;
   }
 
-  public void setImageUrl(String imageUrl) {
-    this.imageUrl = imageUrl;
+  public void setImagesUrl(List<String> imageUrl) {
+    this.imagesUrl = imageUrl;
   }
 
   public LocalDateTime getCreatedAt() {

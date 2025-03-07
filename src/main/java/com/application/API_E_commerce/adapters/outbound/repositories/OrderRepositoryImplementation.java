@@ -3,7 +3,7 @@ package com.application.API_E_commerce.adapters.outbound.repositories;
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderEntity;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
-import com.application.API_E_commerce.utils.converters.OrderConverter;
+import com.application.API_E_commerce.utils.mappers.OrderMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -14,20 +14,20 @@ import java.util.UUID;
 @Component
 public class OrderRepositoryImplementation implements OrderRepository {
   private final JpaOrderRepository jpaOrderRepository;
-  private final OrderConverter orderConverter;
+  private final OrderMapper orderMapper;
 
-  public OrderRepositoryImplementation(JpaOrderRepository jpaOrderRepository, OrderConverter orderConverter) {
+  public OrderRepositoryImplementation(JpaOrderRepository jpaOrderRepository, OrderMapper orderMapper) {
     this.jpaOrderRepository = jpaOrderRepository;
-    this.orderConverter = orderConverter;
+    this.orderMapper = orderMapper;
   }
 
   @Override
   public Order saveOrder(Order order) {
-    JpaOrderEntity orderEntityToSave = orderConverter.toJpa(order);
+    JpaOrderEntity orderEntityToSave = orderMapper.toJpa(order);
 
     JpaOrderEntity savedOrderEntity = this.jpaOrderRepository.save(orderEntityToSave);
 
-    return orderConverter.toDomain(savedOrderEntity);
+    return orderMapper.toDomain(savedOrderEntity);
   }
 
   @Override
@@ -36,13 +36,13 @@ public class OrderRepositoryImplementation implements OrderRepository {
 
     if (jpaOrderEntityList.isEmpty()) return Collections.emptyList();
 
-    return jpaOrderEntityList.stream().map(orderConverter::toDomain).toList();
+    return jpaOrderEntityList.stream().map(orderMapper::toDomain).toList();
   }
 
   @Override
   public Optional<Order> findOrderById(UUID orderId) {
     return Optional.ofNullable(jpaOrderRepository.findById(orderId)
-            .map(orderConverter::toDomain)
+            .map(orderMapper::toDomain)
             .orElseThrow(() -> new IllegalArgumentException("Order was not found when searching for id in the repository.")));
   }
 

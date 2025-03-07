@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -29,11 +32,11 @@ public class  JpaProductEntity {
 
   private int stock;
 
-  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  @JoinColumn(name = "category_id", nullable = true)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @JoinColumn(name = "category_id")
   private JpaCategoryEntity category;
 
-  private String imageUrl;
+  private List<String> imagesUrl = new ArrayList<>();
 
   private LocalDateTime createdAt;
 
@@ -88,12 +91,12 @@ public class  JpaProductEntity {
     this.category = category;
   }
 
-  public String getImageUrl() {
-    return imageUrl;
+  public List<String> getImagesUrl() {
+    return imagesUrl == null ? Collections.emptyList() : imagesUrl;
   }
 
-  public void setImageUrl(String imageUrl) {
-    this.imageUrl = imageUrl;
+  public void setImagesUrl(List<String> imagesUrl) {
+    this.imagesUrl = imagesUrl;
   }
 
   public LocalDateTime getCreatedAt() {
@@ -125,8 +128,9 @@ public class  JpaProductEntity {
     jpaProductEntity.price = productDomain.getPrice();
     jpaProductEntity.stock = productDomain.getStock();
     jpaProductEntity.category = jpaCategoryEntity;
-    jpaProductEntity.imageUrl = productDomain.getImageUrl();
+    jpaProductEntity.imagesUrl = productDomain.getImagesUrl();
     jpaProductEntity.createdAt = productDomain.getCreatedAt();
+    jpaProductEntity.version = productDomain.getVersion();
 
     return jpaProductEntity;
   }

@@ -11,8 +11,14 @@ public class Category {
   private String name;
   private String description;
   private List<Product> products = new ArrayList<>();
+  private long version = 0;
 
   public Category() {
+  }
+
+  public Category(String name, String description) {
+    this.name = name;
+    this.description = description;
   }
 
   public Category(UUID id, String name, String description, List<Product> products) {
@@ -20,6 +26,16 @@ public class Category {
     this.name = name;
     this.description = description;
     this.products = products;
+  }
+
+  public void addProduct(Product product) {
+    if (this.products == null) {
+      this.products = new ArrayList<>();
+    }
+    if (!this.products.contains(product)) {
+      this.products.add(product);
+      product.setCategory(this);
+    }
   }
 
   public UUID getId() {
@@ -47,10 +63,19 @@ public class Category {
   }
 
   public List<Product> getProducts() {
+    if (products == null) products = new ArrayList<>();
     return products;
   }
 
   public void setProducts(List<Product> products) {
     this.products = products;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
   }
 }

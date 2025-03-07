@@ -28,7 +28,7 @@ public class JpaCategoryEntity {
 
   private String description;
 
-  @OneToMany(mappedBy = "category", orphanRemoval = true)
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaProductEntity> products = new ArrayList<>();
 
   @Version

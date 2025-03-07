@@ -2,6 +2,7 @@ package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.ProductUseCases;
 import com.application.API_E_commerce.domain.category.Category;
+import com.application.API_E_commerce.domain.category.CategoryRepository;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.dtos.ProductFiltersCriteria;
@@ -10,32 +11,43 @@ import com.application.API_E_commerce.domain.product.repository.ProductRepositor
 import com.application.API_E_commerce.utils.validators.CategoryValidator;
 import com.application.API_E_commerce.utils.validators.ProductValidator;
 import com.cloudinary.utils.StringUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @Service
+@Transactional(rollbackOn = Exception.class)
 public class ProductServiceImplementation implements ProductUseCases {
   private final ProductRepository productRepository;
   private final ProductValidator productValidator;
   private final CategoryValidator categoryValidator;
+  private final CategoryRepository categoryRepository;
   private final CloudinaryServiceImplementation cloudinaryServiceImplementation;
+
+  @PersistenceContext
+  private EntityManager entityManager;
 
   public ProductServiceImplementation(
           ProductRepository productRepository,
           ProductValidator productValidator,
-          CategoryValidator categoryValidator, CloudinaryServiceImplementation cloudinaryServiceImplementation
+          CategoryValidator categoryValidator, CategoryRepository categoryRepository,
+          CloudinaryServiceImplementation cloudinaryServiceImplementation
   ) {
     this.productRepository = productRepository;
     this.productValidator = productValidator;
     this.categoryValidator = categoryValidator;
+    this.categoryRepository = categoryRepository;
     this.cloudinaryServiceImplementation = cloudinaryServiceImplementation;
   }
 
@@ -48,7 +60,6 @@ public class ProductServiceImplementation implements ProductUseCases {
   }
 
   @Override
-  @Transactional
   public Product createProduct(CreateProductRequestDTO createProductRequest) {
     this.productValidator.validateCreateProductRequest(createProductRequest);
 
@@ -77,12 +88,21 @@ public class ProductServiceImplementation implements ProductUseCases {
     this.productRepository.findProductById(productId)
             .ifPresentOrElse(
                     existingProduct -> {
-                      existingProduct.setName(updateProductRequest.name());
-                      existingProduct.setDescription(updateProductRequest.description());
-                      existingProduct.setPrice(updateProductRequest.price());
-                      existingProduct.setStock(updateProductRequest.stock());
-                      existingProduct.setCategory(updateProductRequest.category());
-                      existingProduct.setImageUrl(updateProductRequest.imageUrl());
+                      updateProductRequest.name().ifPresent(existingProduct::setName);
+                      updateProductRequest.description().ifPresent(existingProduct::setDescription);
+                      updateProductRequest.price().ifPresent(existingProduct::setPrice);
+                      updateProductRequest.stock().ifPresent(existingProduct::setStock);
+                      updateProductRequest.category().ifPresent(existingProduct::setCategory);
+
+                      updateProductRequest.imagesUrl().ifPresent(newImages -> {
+                        List<String> currentImages = existingProduct.getImagesUrl() != null
+                                ? new ArrayList<>(existingProduct.getImagesUrl())
+                                : new ArrayList<>();
+
+                        currentImages.addAll(newImages);
+
+                        existingProduct.setImagesUrl(currentImages);
+                      });
                       this.productRepository.saveProduct(existingProduct);
                     },
                     () -> { throw new IllegalArgumentException("Product was not found."); }
@@ -100,48 +120,67 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   @Transactional
-  public void associateProductToCategory(UUID productId, UUID categoryId) {
-    Category category = this.fetchExistingCategory(categoryId);
+  public Product associateProductToCategory(UUID productId, UUID categoryId) {
+    Category category = this.categoryRepository.findCategoryById(categoryId)
+            .orElseThrow(() -> new IllegalArgumentException("Category was not found."));
 
-    Product product = this.fetchExistingProduct(productId);
+    Product product = this.productRepository.findProductById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("Product was not found."));
+
+    if (product.getCategory() != null) {
+      throw new IllegalArgumentException("Category already exists in product.");
+    }
+
+    category.getProducts().add(product);
 
     product.setCategory(category);
 
-    this.productRepository.saveProduct(product);
+    return this.productRepository.saveProduct(product);
   }
 
   @Override
   public Category getProductCategory(UUID productId) {
-    Product product = this.fetchExistingProduct(productId);
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
     return product.getCategory();
   }
 
   @Override
-  public void removeProductFromCategory(UUID productId) {
-    Product product = this.fetchExistingProduct(productId);
+  public Product removeProductFromCategory(UUID productId) {
+    return this.productRepository.findProductById(productId)
+            .map(existingProduct -> {
+              if (existingProduct.getCategory() == null) {
+                throw new IllegalArgumentException("Product category cannot be null.");
+              }
 
-    UUID categoryId = product.getCategory().getId();
-    this.fetchExistingCategory(categoryId);
+              existingProduct.setCategory(null);
 
-    product.setCategory(null);
-
-    this.productRepository.saveProduct(product);
+              return productRepository.saveProduct(existingProduct);
+            }).orElseThrow(() -> new IllegalArgumentException("Product not found."));
   }
 
   @Override
-  @Transactional
-  public void uploadProductImage(UUID productId, String imageUrl) throws IOException {
-    Product product = this.fetchExistingProduct(productId);
+  public void uploadProductImage(UUID productId, List<String> imagesUrl) throws IOException {
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    this.uploadImageToCloudinary(imageUrl, productId);
+    List<String> existingImages = product.getImagesUrl() != null
+            ? new ArrayList<>(product.getImagesUrl())
+            : new ArrayList<>();
 
-    product.setImageUrl(imageUrl);
+    imagesUrl.forEach(imageUrl -> {
+      try {
+        this.uploadImageToCloudinary(imageUrl, productId);
+        existingImages.add(imageUrl);
+      } catch (IOException e) {
+        throw new RuntimeException("Error when upload image: " + imageUrl, e);
+      }
+    });
+
+    product.setImagesUrl(existingImages);
 
     this.productRepository.saveProduct(product);
   }
 
-  @Transactional
   private void uploadImageToCloudinary(String imageUrl, UUID productId) throws IOException {
     try {
       this.cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, productId);
@@ -154,22 +193,21 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   public List<String> getProductImages(UUID productId) {
-    Product product = this.fetchExistingProduct(productId);
-    return List.of(product.getImageUrl());
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+    return product.getImagesUrl();
   }
 
   @Override
-  @Transactional(rollbackOn = Exception.class)
   public void deleteProductImage(UUID productId) throws IOException {
-    Product product = this.fetchExistingProduct(productId);
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    if (product.getImageUrl() == null || StringUtils.isEmpty(product.getImageUrl())) {
+    if (product.getImagesUrl().isEmpty() || product.getImagesUrl() == null) {
       throw new IllegalArgumentException("Product image was not found.");
     }
 
     this.cloudinaryServiceImplementation.deleteImageFromCloudinary(productId);
 
-    product.setImageUrl(null);
+    product.setImagesUrl(null);
 
     productRepository.saveProduct(product);
 
@@ -178,7 +216,7 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   public void updateStockAfterSale(UUID productId, int quantitySold) {
-    Product product = this.fetchExistingProduct(productId);
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
     int actualStock = product.getStock();
 
@@ -191,7 +229,7 @@ public class ProductServiceImplementation implements ProductUseCases {
 
   @Override
   public int getProductStock(UUID productId) {
-    Product product = this.fetchExistingProduct(productId);
+    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
     return product.getStock();
   }

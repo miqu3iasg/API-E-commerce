@@ -1,11 +1,16 @@
 package com.application.API_E_commerce.adapters.outbound.repositories;
 
+import com.application.API_E_commerce.adapters.outbound.entities.category.JpaCategoryEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.product.JpaProductEntity;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.ProductFiltersCriteria;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import com.application.API_E_commerce.utils.converters.ProductConverter;
+import com.application.API_E_commerce.utils.mappers.CategoryMapper;
+import com.application.API_E_commerce.utils.mappers.ProductMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -16,34 +21,72 @@ import java.util.UUID;
 @Component
 public class ProductRepositoryImplementation implements ProductRepository {
   private final JpaProductRepository jpaProductRepository;
-  private final ProductConverter productConverter;
+  private final ProductMapper productMapper;
+  private final CategoryMapper categoryMapper;
 
   public ProductRepositoryImplementation(
           JpaProductRepository jpaProductRepository,
-          ProductConverter productConverter
+          ProductMapper productMapper,
+          CategoryMapper categoryMapper
   ) {
     this.jpaProductRepository = jpaProductRepository;
-    this.productConverter = productConverter;
+    this.productMapper = productMapper;
+    this.categoryMapper = categoryMapper;
   }
 
   @Override
   @Transactional
   public Product saveProduct(Product product) {
-    JpaProductEntity productEntityToSave = this.productConverter.toJpa(product);
-    JpaProductEntity productEntityToConvert = this.jpaProductRepository.save(productEntityToSave);
-    return productConverter.toDomain(productEntityToConvert);
+    JpaProductEntity productEntityToSave;
+
+    if (product.getId() != null) {
+      JpaProductEntity existingEntity = this.jpaProductRepository.findById(product.getId()).orElseThrow();
+      productEntityToSave = updateExistingEntity(existingEntity, product);
+      this.jpaProductRepository.save(productEntityToSave);
+    }
+
+    productEntityToSave = this.productMapper.toJpa(product);
+
+    JpaProductEntity savedProduct = this.jpaProductRepository.save(productEntityToSave);
+
+    return productMapper.toDomain(savedProduct);
+  }
+
+  private JpaProductEntity updateExistingEntity(JpaProductEntity existingEntity, Product product) {
+    existingEntity.setName(product.getName());
+    existingEntity.setDescription(product.getDescription());
+    existingEntity.setPrice(product.getPrice());
+    existingEntity.setStock(product.getStock());
+    existingEntity.setImagesUrl(product.getImagesUrl());
+    existingEntity.setCreatedAt(product.getCreatedAt());
+    existingEntity.setVersion(product.getVersion());
+
+    if (product.getCategory() != null) {
+      JpaCategoryEntity existingCategory = existingEntity.getCategory();
+
+      if (existingCategory != null && existingCategory.getId().equals(product.getCategory().getId())) {
+        existingEntity.setCategory(existingCategory);
+      } else {
+        existingEntity.setCategory(categoryMapper.toJpa(product.getCategory()));
+      }
+    } else {
+      existingEntity.setCategory(null);
+    }
+
+    return existingEntity;
   }
 
   @Override
+  @Transactional
   public Optional<Product> findProductById(UUID productId) {
     return Optional.ofNullable(jpaProductRepository.findById(productId)
-            .map(productConverter::toDomain)
+            .map(productMapper::toDomain)
             .orElseThrow(() -> new IllegalArgumentException("Product was not found when searching for id in the repository.")));
   }
 
   @Override
   public void deleteProduct(Product product) {
-    JpaProductEntity productEntityToDelete = this.productConverter.toJpa(product);
+    JpaProductEntity productEntityToDelete = this.productMapper.toJpa(product);
 
     this.jpaProductRepository.findById(product.getId())
             .map(existingProductEntity -> {
@@ -73,7 +116,7 @@ public class ProductRepositoryImplementation implements ProductRepository {
 
     if (jpaProductEntityFilteredList.isEmpty()) return Collections.emptyList();
 
-    return jpaProductEntityFilteredList.stream().map(productConverter::toDomain).toList();
+    return jpaProductEntityFilteredList.stream().map(productMapper::toDomain).toList();
   }
 
   @Override
@@ -82,6 +125,6 @@ public class ProductRepositoryImplementation implements ProductRepository {
 
     if (jpaProductEntityList.isEmpty()) return Collections.emptyList();
 
-    return jpaProductEntityList.stream().map(productConverter::toDomain).toList();
+    return jpaProductEntityList.stream().map(productMapper::toDomain).toList();
   }
 }

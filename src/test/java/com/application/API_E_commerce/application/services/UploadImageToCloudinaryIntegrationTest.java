@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.io.IOException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,12 +39,17 @@ public class UploadImageToCloudinaryIntegrationTest {
     Product product = productService.createProduct(createProductRequest);
 
     UUID productId = product.getId();
-    String testImageUrl = "https://media.istockphoto.com/id/496603666/pt/vetorial/%C3%ADcone-plana-verifica%C3%A7%C3%A3o.jpg?s=612x612&w=0&k=20&c=59xwMZUHiaI53N1ouEYGjVsdbanq4iXqiU_MppilZ7M=";
+    List<String> testImages = List.of(
+            "https://media.istockphoto.com/id/496603666/pt/vetorial/%C3%ADcone-plana-verifica%C3%A7%C3%A3o.jpg?s=612x612&w=0&k=20&c=59xwMZUHiaI53N1ouEYGjVsdbanq4iXqiU_MppilZ7M=",
+            "https://images.pexels.com/photos/2071882/pexels-photo-2071882.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
+    );
 
-    this.productService.uploadProductImage(productId, testImageUrl);
+    this.productService.uploadProductImage(productId, testImages);
 
     Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
-    assertNotNull(updatedProduct.getImageUrl(), "Image URL should be updated");
-    assertEquals(testImageUrl, updatedProduct.getImageUrl());
+
+    assertNotNull(updatedProduct.getImagesUrl(), "Image URL list should not be null");
+    assertEquals(2, updatedProduct.getImagesUrl().size(), "Product should have two images");
+    assertTrue(updatedProduct.getImagesUrl().containsAll(testImages), "All uploaded images should be present");
   }
 }

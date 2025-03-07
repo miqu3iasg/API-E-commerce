@@ -8,6 +8,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = { ProductMapper.class })
 public interface CategoryMapper {
@@ -18,7 +19,8 @@ public interface CategoryMapper {
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "name", target = "name"),
           @Mapping(source = "description", target = "description"),
-          @Mapping(source = "products", target = "products", qualifiedByName = "productsToJpa")
+          @Mapping(source = "products", target = "products", qualifiedByName = "productsToJpa", ignore = false),
+          @Mapping(source = "version", target = "version")
   })
   JpaCategoryEntity toJpa(Category domain);
 
@@ -26,7 +28,8 @@ public interface CategoryMapper {
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "name", target = "name"),
           @Mapping(source = "description", target = "description"),
-          @Mapping(source = "products", target = "products", qualifiedByName = "productsToDomain")
+          @Mapping(source = "products", target = "products", qualifiedByName = "productsToDomain", ignore = false),
+          @Mapping(source = "version", target = "version")
   })
   Category toDomain(JpaCategoryEntity jpa);
 
@@ -34,13 +37,13 @@ public interface CategoryMapper {
   default List<JpaProductEntity> productsToJpa(List<Product> products) {
     return products == null
             ? null
-            : products.stream().map(ProductMapper.INSTANCE::toJpa).toList();
+            : products.stream().map(ProductMapper.INSTANCE::toJpa).collect(Collectors.toList());
   }
 
   @Named("productsToDomain")
   default List<Product> productsToDomain(List<JpaProductEntity> jpaProducts) {
     return jpaProducts == null
             ? null
-            : jpaProducts.stream().map(ProductMapper.INSTANCE::toDomain).toList();
+            : jpaProducts.stream().map(ProductMapper.INSTANCE::toDomain).collect(Collectors.toList());
   }
 }
