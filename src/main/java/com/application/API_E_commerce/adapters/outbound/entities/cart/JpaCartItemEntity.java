@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.util.UUID;
 
@@ -15,6 +16,8 @@ import java.util.UUID;
 public class JpaCartItemEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
+  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+  @Column(name = "id", updatable = false, nullable = false)
   private UUID id;
 
   @ManyToOne

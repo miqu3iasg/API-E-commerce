@@ -4,6 +4,7 @@ import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.user.User;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ public class Cart {
   private User user;
   private LocalDateTime createdAt;
   private CartStatus cartStatus;
-  private List<CartItem> items;
+  private List<CartItem> items = new ArrayList<>();
 
   public Cart() {
   }

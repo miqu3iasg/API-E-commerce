@@ -1,5 +1,6 @@
 package com.application.API_E_commerce.adapters.outbound.entities.product;
 
+import com.application.API_E_commerce.adapters.outbound.entities.cart.JpaCartItemEntity;
 import com.application.API_E_commerce.adapters.outbound.entities.category.JpaCategoryEntity;
 import com.application.API_E_commerce.domain.product.Product;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class  JpaProductEntity {
   @Id
+  @Column(name = "product_id")
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
@@ -35,6 +37,9 @@ public class  JpaProductEntity {
   @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinColumn(name = "category_id")
   private JpaCategoryEntity category;
+
+  @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
+  private List<JpaCartItemEntity> cartItem;
 
   private List<String> imagesUrl = new ArrayList<>();
 

@@ -1,18 +1,22 @@
 package com.application.API_E_commerce.application.services;
 
+import com.application.API_E_commerce.adapters.outbound.repositories.CartRepositoryImplementation;
 import com.application.API_E_commerce.application.usecases.CartUseCases;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.CartRepository;
 import com.application.API_E_commerce.domain.cart.CartStatus;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
+import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,16 +25,23 @@ public class CartServiceImplementation implements CartUseCases {
   private final CartRepository cartRepository;
   private final ProductRepository productRepository;
   private final UserRepository userRepository;
+  private final CartItemRepository cartItemRepository;
 
-  public CartServiceImplementation(CartRepository cartRepository, ProductRepository productRepository, UserRepository userRepository) {
+  @Autowired
+  public CartServiceImplementation (
+          CartRepository cartRepository,
+          ProductRepository productRepository,
+          UserRepository userRepository, CartItemRepository cartItemRepository
+  ) {
     this.cartRepository = cartRepository;
     this.productRepository = productRepository;
     this.userRepository = userRepository;
+    this.cartItemRepository = cartItemRepository;
   }
 
   @Override
   @Transactional
-  public void addProductToCart(UUID userId, UUID productId, int quantity) {
+  public Cart addProductToCart(final UUID userId, final UUID productId, int quantity) {
     validateInput(userId, productId, quantity);
 
     User user = userRepository
@@ -45,23 +56,32 @@ public class CartServiceImplementation implements CartUseCases {
 
     validateStockWithExistingQuantities(existingProduct, quantity, cart);
 
-    cart.getItems()
-            .stream()
+    List<CartItem> items = (cart.getItems() != null) ? cart.getItems() : new ArrayList<>();
+
+    items.stream()
             .filter(item -> item.getProduct().getId().equals(existingProduct.getId()))
             .findFirst()
             .ifPresentOrElse(existingItem -> {
               existingItem.setQuantity(existingItem.getQuantity() + quantity);
+              this.cartItemRepository.saveCartItem(existingItem);
             }, () -> {
               CartItem item = new CartItem();
               item.setProduct(existingProduct);
               item.setQuantity(quantity);
+              item.setCart(cart);
+              this.cartItemRepository.saveCartItem(item);
+              if (cart.getItems() == null) cart.setItems(new ArrayList<>());
               cart.getItems().add(item);
             });
 
-    cartRepository.saveCart(cart);
+    existingProduct.setStock(existingProduct.getStock() - quantity);
+
+    this.productRepository.saveProduct(existingProduct);
+
+    return this.cartRepository.saveCart(cart);
   }
 
-  private void validateInput(UUID userId, UUID productId, int quantity) {
+  private void validateInput(final UUID userId, final UUID productId, int quantity) {
     if (userId == null) throw new IllegalArgumentException("User id cannot be null");
     if (productId == null) throw new IllegalArgumentException("Product id cannot be null");
     if (quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0.");
@@ -79,13 +99,15 @@ public class CartServiceImplementation implements CartUseCases {
     newCart.setUser(user);
     newCart.setCartStatus(CartStatus.ACTIVE);
     newCart.setCreatedAt(LocalDateTime.now());
-    cartRepository.saveCart(newCart);
-    user.getCarts().add(newCart);
+    newCart.setItems(new ArrayList<>());
+    Cart savedCart = this.cartRepository.saveCart(newCart);
+    user.getCarts().add(savedCart);
     return newCart;
   }
 
   private void validateStockWithExistingQuantities(Product product, int newQuantity, Cart cart) {
-    int existingQuantity = cart.getItems()
+    List<CartItem> items = (cart.getItems() != null) ? cart.getItems() : new ArrayList<>();
+    int existingQuantity = items
             .stream()
             .filter(item -> item.getProduct().getId().equals(product.getId()))
             .mapToInt(CartItem::getQuantity)
@@ -97,22 +119,22 @@ public class CartServiceImplementation implements CartUseCases {
   }
 
   @Override
-  public void removeProductFromCart(UUID userId, UUID productId) {
+  public void removeProductFromCart(final UUID userId, final UUID productId) {
 
   }
 
   @Override
-  public void updateProductQuantityInCart(UUID userId, UUID productId, int quantity) {
+  public void updateProductQuantityInCart(final UUID userId, final UUID productId, int quantity) {
 
   }
 
   @Override
-  public void clearCart(UUID userId) {
+  public void clearCart(final UUID userId) {
 
   }
 
   @Override
-  public void checkoutCart(UUID userId) {
+  public void checkoutCart(final UUID userId) {
 
   }
 }

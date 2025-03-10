@@ -7,8 +7,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,21 +31,14 @@ public class JpaCartEntity {
 
   private CartStatus cartStatus;
 
-  @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
   private List<JpaCartItemEntity> items;
 
-  public static JpaCartEntity fromDomain (
-          Cart cartDomain,
-          JpaUserEntity jpaUserEntity,
-          List<JpaCartItemEntity> jpaCartItems
-  ){
-    JpaCartEntity jpaCartEntity = new JpaCartEntity();
-    jpaCartEntity.id = cartDomain.getId();
-    jpaCartEntity.user = jpaUserEntity;
-    jpaCartEntity.createdAt = cartDomain.getCreatedAt();
-    jpaCartEntity.items = jpaCartItems;
-
-    return jpaCartEntity;
+  @PrePersist
+  public void generateUUID() {
+    if (id == null) {
+      id = UUID.randomUUID();
+    }
   }
 
   public UUID getId() {
