@@ -5,11 +5,13 @@ import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
 import com.application.API_E_commerce.utils.mappers.CartItemMapper;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class CartItemRepositoryImplementation implements CartItemRepository {
   private final JpaCartItemRepository jpaCartItemRepository;
@@ -21,11 +23,8 @@ public class CartItemRepositoryImplementation implements CartItemRepository {
   }
 
   @Override
-  @Transactional
   public CartItem saveCartItem(CartItem cartItem) {
     JpaCartItemEntity jpaCartItemToSave = cartItemMapper.toJpa(cartItem);
-
-    if (jpaCartItemToSave.getId() == null) jpaCartItemToSave.setId(UUID.randomUUID());
 
     JpaCartItemEntity jpaCartItemSaved = jpaCartItemRepository.save(jpaCartItemToSave);
 

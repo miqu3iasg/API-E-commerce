@@ -1,5 +1,6 @@
 package com.application.API_E_commerce.domain.product;
 
+import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.category.Category;
 
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ public class Product {
   private int stock;
   private Category category;
   private List<String> imagesUrl = new ArrayList<>();
+  private List<CartItem> items = new ArrayList<>();
   private LocalDateTime createdAt;
   private long version = 0;
 
@@ -114,5 +116,13 @@ public class Product {
 
   public void setVersion(long version) {
     this.version = version;
+  }
+
+  public List<CartItem> getItems() {
+    return items;
+  }
+
+  public void setItems(List<CartItem> items) {
+    this.items = items;
   }
 }

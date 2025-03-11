@@ -21,6 +21,13 @@ public class CartItem {
     this.quantity = quantity;
   }
 
+  public CartItem(Cart cart, Product product, int quantity) {
+    if (this.id == null) this.id = UUID.randomUUID();
+    this.cart = cart;
+    this.product = product;
+    this.quantity = quantity;
+  }
+
   public UUID getId() {
     return id;
   }

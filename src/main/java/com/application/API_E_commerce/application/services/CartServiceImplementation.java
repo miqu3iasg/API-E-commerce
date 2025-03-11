@@ -1,6 +1,5 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.adapters.outbound.repositories.CartRepositoryImplementation;
 import com.application.API_E_commerce.application.usecases.CartUseCases;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.CartRepository;
@@ -12,6 +11,7 @@ import com.application.API_E_commerce.domain.product.repository.ProductRepositor
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class CartServiceImplementation implements CartUseCases {
   private final CartRepository cartRepository;
@@ -65,16 +66,13 @@ public class CartServiceImplementation implements CartUseCases {
               existingItem.setQuantity(existingItem.getQuantity() + quantity);
               this.cartItemRepository.saveCartItem(existingItem);
             }, () -> {
-              CartItem item = new CartItem();
-              item.setProduct(existingProduct);
-              item.setQuantity(quantity);
-              item.setCart(cart);
-              this.cartItemRepository.saveCartItem(item);
+              CartItem item = new CartItem(cart, existingProduct, quantity);
               if (cart.getItems() == null) cart.setItems(new ArrayList<>());
               cart.getItems().add(item);
             });
 
     existingProduct.setStock(existingProduct.getStock() - quantity);
+    existingProduct.setItems(items);
 
     this.productRepository.saveProduct(existingProduct);
 

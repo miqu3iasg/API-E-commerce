@@ -38,7 +38,7 @@ public class  JpaProductEntity {
   @JoinColumn(name = "category_id")
   private JpaCategoryEntity category;
 
-  @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH }, orphanRemoval = true)
+  @OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
   private List<JpaCartItemEntity> cartItem;
 
   private List<String> imagesUrl = new ArrayList<>();

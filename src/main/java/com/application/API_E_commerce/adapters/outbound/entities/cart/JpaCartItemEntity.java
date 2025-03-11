@@ -16,8 +16,6 @@ import java.util.UUID;
 public class JpaCartItemEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  @Column(name = "id", updatable = false, nullable = false)
   private UUID id;
 
   @ManyToOne

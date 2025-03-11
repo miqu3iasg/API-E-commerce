@@ -1,27 +1,20 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.adapters.outbound.repositories.CartRepositoryImplementation;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.CartRepository;
 import com.application.API_E_commerce.domain.cart.CartStatus;
-import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
-import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
-import com.application.API_E_commerce.domain.cart.cartitem.CartItemUseCases;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
 import com.application.API_E_commerce.domain.user.repository.UserRepository;
-import com.application.API_E_commerce.utils.mappers.CartMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,12 +38,6 @@ public class CartServiceTest {
   private CartRepository cartRepository;
 
   @Mock
-  private CartItemUseCases cartItemUseCases;
-
-  @Mock
-  private CartItemRepository cartItemRepository;
-
-  @Mock
   private ProductRepository productRepository;
 
   @Mock
@@ -59,7 +46,8 @@ public class CartServiceTest {
   @Test
   @Transactional
   void shouldAddProductInCartWhenUserAndProductExists() {
-    Product mockProduct = mockProductFactory(); // The stock product is 10
+    Product mockProduct = mockProductFactory();
+    mockProduct.setStock(10);
 
     productRepository.saveProduct(mockProduct);
 
@@ -80,8 +68,9 @@ public class CartServiceTest {
     assertEquals(1, cart.getItems().size());
     assertEquals(mockProduct, cart.getItems().getFirst().getProduct());
     assertEquals(5, cart.getItems().getFirst().getQuantity());
-
-    verify(cartItemRepository, times(1)).saveCartItem(any(CartItem.class)); // o id do cart item está vindo como null
+    assertEquals(CartStatus.ACTIVE, cart.getCartStatus());
+    assertEquals(mockUser, cart.getUser());
+    assertNotNull(cart.getId());
   }
 
   private User mockUserFactory() {
@@ -116,10 +105,10 @@ public class CartServiceTest {
     product.setName("name");
     product.setDescription("description");
     product.setPrice(BigDecimal.valueOf(100.0));
-    product.setStock(10);
     product.setCategory(null);
     product.setImagesUrl(null);
     product.setCreatedAt(null);
+
     return product;
   }
 }

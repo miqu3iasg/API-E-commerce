@@ -31,7 +31,7 @@ public class JpaCartEntity {
 
   private CartStatus cartStatus;
 
-  @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
+  @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH }, orphanRemoval = true)
   private List<JpaCartItemEntity> items;
 
   @PrePersist
