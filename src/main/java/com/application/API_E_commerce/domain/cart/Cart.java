@@ -3,6 +3,7 @@ package com.application.API_E_commerce.domain.cart;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.user.User;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ public class Cart {
   private User user;
   private LocalDateTime createdAt;
   private CartStatus cartStatus;
+  private BigDecimal totalValue;
   private List<CartItem> items = new ArrayList<>();
 
   public Cart() {
@@ -56,6 +58,14 @@ public class Cart {
 
   public void setCartStatus(CartStatus cartStatus) {
     this.cartStatus = cartStatus;
+  }
+
+  public BigDecimal getTotalValue() {
+    return totalValue;
+  }
+
+  public void setTotalValue(BigDecimal totalValue) {
+    this.totalValue = totalValue;
   }
 
   public List<CartItem> getItems() {

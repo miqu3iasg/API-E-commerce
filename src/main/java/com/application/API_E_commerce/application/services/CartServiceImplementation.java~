@@ -15,8 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,18 +42,28 @@ public class CartServiceImplementation implements CartUseCases {
     this.cartItemRepository = cartItemRepository;
   }
 
+  private User validateIfUserExists(final UUID userId) {
+    return userRepository
+            .findUserById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User cannot be null."));
+  }
+
+  private Product validateIfProductExists(final UUID productId) {
+    return productRepository
+            .findProductById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("Product cannot be null."));
+  }
+
   @Override
   @Transactional
   public Cart addProductToCart(final UUID userId, final UUID productId, int quantity) {
-    validateInput(userId, productId, quantity);
+    validateInput(userId, productId);
 
-    User user = userRepository
-            .findUserById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User cannot be null."));
+    if (quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0.");
 
-    Product existingProduct = productRepository
-            .findProductById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("Product cannot be null."));
+    User user = validateIfUserExists(userId);
+
+    Product existingProduct = validateIfProductExists(productId);
 
     Cart cart = getOrCreateActiveCart(user);
 
@@ -71,6 +83,9 @@ public class CartServiceImplementation implements CartUseCases {
               cart.getItems().add(item);
             });
 
+    BigDecimal totalValue = cart.getTotalValue().add(existingProduct.getPrice().multiply(BigDecimal.valueOf(quantity)));
+    cart.setTotalValue(totalValue);
+
     existingProduct.setStock(existingProduct.getStock() - quantity);
     existingProduct.setItems(items);
 
@@ -79,10 +94,9 @@ public class CartServiceImplementation implements CartUseCases {
     return this.cartRepository.saveCart(cart);
   }
 
-  private void validateInput(final UUID userId, final UUID productId, int quantity) {
+  private void validateInput(final UUID userId, final UUID productId) {
     if (userId == null) throw new IllegalArgumentException("User id cannot be null");
     if (productId == null) throw new IllegalArgumentException("Product id cannot be null");
-    if (quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0.");
   }
 
   private Cart getOrCreateActiveCart(User user) {
@@ -118,29 +132,46 @@ public class CartServiceImplementation implements CartUseCases {
 
   @Override
   public void removeProductFromCart(final UUID userId, final UUID productId) {
-    if (userId == null) throw new IllegalArgumentException("User id cannot be null");
-    if (productId == null) throw new IllegalArgumentException("Product id cannot be null");
+    validateInput(userId, productId);
 
-    User user = this.userRepository
-            .findUserById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User cannot be null."));
+    User user = validateIfUserExists(userId);
 
-    if (user.getCarts().isEmpty() || user.getCarts() == null) throw new IllegalArgumentException("User has no active cart.");
-    if (user.getCarts().stream().noneMatch(cart -> cart.getCartStatus() == CartStatus.ACTIVE)) throw new IllegalArgumentException("User has no active cart.");
+    ensureUserHasActiveCart(user);
 
-    Product product = this.productRepository
-            .findProductById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("Product cannot be null."));
+    Product product = validateIfProductExists(productId);
 
     Cart cart = getOrCreateActiveCart(user);
 
-    cart.getItems().removeIf(item -> item.getProduct().getId().equals(product.getId()));
+    List<CartItem> items = new ArrayList<>(cart.getItems());
+    cart.setItems(items);
 
-    product.setStock(product.getStock() + product.getItems().stream().mapToInt(CartItem::getQuantity).sum());
+    int quantityRemoved = items.stream()
+            .filter(item -> item.getProduct().getId().equals(product.getId()))
+            .mapToInt(CartItem::getQuantity)
+            .sum();
+
+    items.removeIf(item -> item.getProduct().getId().equals(product.getId()));
+
+    if(quantityRemoved > 0) {
+      product.setStock(product.getStock() + quantityRemoved);
+      BigDecimal totalValueAfterRemoval = product.getPrice().multiply(BigDecimal.valueOf(quantityRemoved));
+      cart.setTotalValue(cart.getTotalValue().subtract(totalValueAfterRemoval));
+    }
+
+    cart.setTotalValue(cart.getTotalValue().max(BigDecimal.ZERO));
 
     this.productRepository.saveProduct(product);
 
     this.cartRepository.saveCart(cart);
+  }
+
+  private static void ensureUserHasActiveCart(User user) {
+    if (user.getCarts().isEmpty() || user.getCarts() == null) {
+      throw new IllegalArgumentException("User has no cart.");
+    }
+    if (user.getCarts().stream().noneMatch(cart -> cart.getCartStatus() == CartStatus.ACTIVE)) {
+      throw new IllegalArgumentException("User has no active cart.");
+    }
   }
 
   @Override

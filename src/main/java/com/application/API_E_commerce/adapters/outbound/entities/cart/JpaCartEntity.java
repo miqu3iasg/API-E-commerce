@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +32,10 @@ public class JpaCartEntity {
 
   private CartStatus cartStatus;
 
+  private BigDecimal totalValue;
+
   @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH }, orphanRemoval = true)
-  private List<JpaCartItemEntity> items;
+  private List<JpaCartItemEntity> items = new ArrayList<>();
 
   @PrePersist
   public void generateUUID() {
@@ -71,6 +74,14 @@ public class JpaCartEntity {
 
   public void setCartStatus(CartStatus cartStatus) {
     this.cartStatus = cartStatus;
+  }
+
+  public BigDecimal getTotalValue() {
+    return totalValue;
+  }
+
+  public void setTotalValue(BigDecimal totalValue) {
+    this.totalValue = totalValue;
   }
 
   public List<JpaCartItemEntity> getItems() {

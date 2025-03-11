@@ -15,8 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,6 +83,9 @@ public class CartServiceImplementation implements CartUseCases {
               cart.getItems().add(item);
             });
 
+    BigDecimal totalValue = cart.getTotalValue().add(existingProduct.getPrice().multiply(BigDecimal.valueOf(quantity)));
+    cart.setTotalValue(totalValue);
+
     existingProduct.setStock(existingProduct.getStock() - quantity);
     existingProduct.setItems(items);
 
@@ -137,9 +142,23 @@ public class CartServiceImplementation implements CartUseCases {
 
     Cart cart = getOrCreateActiveCart(user);
 
-    cart.getItems().removeIf(item -> item.getProduct().getId().equals(product.getId()));
+    List<CartItem> items = new ArrayList<>(cart.getItems());
+    cart.setItems(items);
 
-    product.setStock(product.getStock() + product.getItems().stream().mapToInt(CartItem::getQuantity).sum());
+    int quantityRemoved = items.stream()
+            .filter(item -> item.getProduct().getId().equals(product.getId()))
+            .mapToInt(CartItem::getQuantity)
+            .sum();
+
+    items.removeIf(item -> item.getProduct().getId().equals(product.getId()));
+
+    if(quantityRemoved > 0) {
+      product.setStock(product.getStock() + quantityRemoved);
+      BigDecimal totalValueAfterRemoval = product.getPrice().multiply(BigDecimal.valueOf(quantityRemoved));
+      cart.setTotalValue(cart.getTotalValue().subtract(totalValueAfterRemoval));
+    }
+
+    cart.setTotalValue(cart.getTotalValue().max(BigDecimal.ZERO));
 
     this.productRepository.saveProduct(product);
 
@@ -148,10 +167,17 @@ public class CartServiceImplementation implements CartUseCases {
 
   private static void ensureUserHasActiveCart(User user) {
     if (user.getCarts().isEmpty() || user.getCarts() == null) {
-      throw new IllegalArgumentException("User has no active cart.");
+      throw new IllegalArgumentException("User has no cart.");
     }
     if (user.getCarts().stream().noneMatch(cart -> cart.getCartStatus() == CartStatus.ACTIVE)) {
       throw new IllegalArgumentException("User has no active cart.");
+    }
+    if (user.getCarts().stream()
+            .filter(cart -> cart.getCartStatus() == CartStatus.ACTIVE)
+            .map(Cart::getItems)
+            .mapToInt(List::size)
+            .sum() == 0) {
+      throw new IllegalArgumentException("Cart has no products.");
     }
   }
 
