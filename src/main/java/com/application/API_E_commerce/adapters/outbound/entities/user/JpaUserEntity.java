@@ -39,7 +39,7 @@ public class JpaUserEntity {
   private LocalDateTime lastLoginAt;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<JpaOrderEntity> orders;
+  private List<JpaOrderEntity> orders = new ArrayList<>();
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaCartEntity> carts = new ArrayList<>();

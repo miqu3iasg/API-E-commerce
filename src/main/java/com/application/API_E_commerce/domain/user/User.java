@@ -18,7 +18,7 @@ public class User {
   private UserRole role;
   private LocalDateTime createdAt;
   private LocalDateTime lastLoginAt;
-  private List<Order> orders;
+  private List<Order> orders = new ArrayList<>();
   private List<Cart> carts = new ArrayList<>();
   private Address address;
 
