@@ -1,6 +1,7 @@
 package com.application.API_E_commerce.adapters.outbound.entities.payment;
 
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderEntity;
+import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ public class JpaPaymentEntity {
   @JoinColumn(name = "order_id", nullable = false)
   private JpaOrderEntity order;
 
-  private String paymentMethod;
+  private PaymentMethod paymentMethod;
 
   private PaymentStatus status;
 
@@ -45,11 +46,11 @@ public class JpaPaymentEntity {
     this.order = order;
   }
 
-  public String getPaymentMethod() {
+  public PaymentMethod getPaymentMethod() {
     return paymentMethod;
   }
 
-  public void setPaymentMethod(String paymentMethod) {
+  public void setPaymentMethod(PaymentMethod paymentMethod) {
     this.paymentMethod = paymentMethod;
   }
 

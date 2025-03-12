@@ -10,6 +10,7 @@ import com.application.API_E_commerce.domain.order.OrderStatus;
 import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
 import com.application.API_E_commerce.domain.payment.Payment;
+import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.user.User;
@@ -65,13 +66,13 @@ class OrderServiceTest {
       List<OrderItem> items = List.of(orderItem);
 
       Payment payment = new Payment();
-      payment.setPaymentMethod("card");
+      payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
       payment.setStatus(PaymentStatus.PENDING);
       payment.setPaymentDate(LocalDateTime.now());
 
       when(paymentService.processPayment(any(Payment.class))).thenReturn(payment);
 
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, payment);
+      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CREDIT_CARD);
 
       Order mockOrder = new Order();
       mockOrder.setId(UUID.randomUUID());
@@ -96,7 +97,7 @@ class OrderServiceTest {
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), new Payment());
+      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), PaymentMethod.CREDIT_CARD);
 
       assertThrows(IllegalArgumentException.class, () -> orderService.createOrderCheckout(request));
     }

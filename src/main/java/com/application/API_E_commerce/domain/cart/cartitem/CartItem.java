@@ -3,6 +3,7 @@ package com.application.API_E_commerce.domain.cart.cartitem;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.product.Product;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class CartItem {

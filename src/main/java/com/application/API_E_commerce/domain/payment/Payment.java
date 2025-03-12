@@ -8,14 +8,14 @@ import java.util.UUID;
 public class Payment {
   private UUID id;
   private Order order;
-  private String paymentMethod;
+  private PaymentMethod paymentMethod;
   private PaymentStatus status;
   private LocalDateTime paymentDate;
 
   public Payment() {
   }
 
-  public Payment(UUID id, Order order, String paymentMethod, PaymentStatus status, LocalDateTime paymentDate) {
+  public Payment(UUID id, Order order, PaymentMethod paymentMethod, PaymentStatus status, LocalDateTime paymentDate) {
     this.id = id;
     this.order = order;
     this.paymentMethod = paymentMethod;
@@ -39,11 +39,11 @@ public class Payment {
     this.order = order;
   }
 
-  public String getPaymentMethod() {
+  public PaymentMethod getPaymentMethod() {
     return paymentMethod;
   }
 
-  public void setPaymentMethod(String paymentMethod) {
+  public void setPaymentMethod(PaymentMethod paymentMethod) {
     this.paymentMethod = paymentMethod;
   }
 

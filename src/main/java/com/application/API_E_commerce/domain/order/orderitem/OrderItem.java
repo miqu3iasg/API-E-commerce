@@ -13,6 +13,15 @@ public class OrderItem {
   private int quantity;
   private BigDecimal unitPrice;
 
+  public OrderItem() {}
+
+  public OrderItem(Product product, int quantity, BigDecimal unitPrice) {
+    this.id = id;
+    this.product = product;
+    this.quantity = quantity;
+    this.unitPrice = unitPrice;
+  }
+
   public UUID getId() {
     return id;
   }
