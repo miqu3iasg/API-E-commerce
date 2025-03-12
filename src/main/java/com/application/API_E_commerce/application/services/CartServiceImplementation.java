@@ -9,8 +9,10 @@ import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
+import com.application.API_E_commerce.domain.order.OrderStatus;
 import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
+import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
@@ -23,6 +25,12 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.*;
 
 @Slf4j
@@ -225,19 +233,6 @@ public class CartServiceImplementation implements CartUseCases {
     processOrder(createOrderCheckoutRequest, activeCart);
   }
 
-  @Override
-  public List<CartItem> getItemsInCart(UUID userId, UUID cartId) {
-    validateInput(userId, cartId);
-
-    User user = validateIfUserExistsAndReturn(userId);
-    Cart cart = validateUserActiveCart(user, cartId);
-
-    return Optional.ofNullable(cart.getItems())
-            .filter(items -> !items.isEmpty())
-            .map(Collections::unmodifiableList)
-            .orElseGet(Collections::emptyList);
-  }
-
   @Transactional(rollbackOn = Exception.class)
   private void processOrder(CreateOrderCheckoutDTO createOrderCheckoutRequest, Cart cart) {
     Order order = this.orderUseCases.createOrderCheckout(createOrderCheckoutRequest);
@@ -270,5 +265,18 @@ public class CartServiceImplementation implements CartUseCases {
     if (!validMethods.contains(paymentMethod.toString())) {
       throw new IllegalArgumentException("Invalid payment method.");
     }
+  }
+
+  @Override
+  public List<CartItem> getItemsInCart(UUID userId, UUID cartId) {
+    validateInput(userId, cartId);
+
+    User user = validateIfUserExistsAndReturn(userId);
+    Cart cart = validateUserActiveCart(user, cartId);
+
+    return Optional.ofNullable(cart.getItems())
+            .filter(items -> !items.isEmpty())
+            .map(Collections::unmodifiableList)
+            .orElseGet(Collections::emptyList);
   }
 }

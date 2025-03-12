@@ -2,6 +2,7 @@ package com.application.API_E_commerce.application.usecases;
 
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
+import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
 
 import java.util.List;
