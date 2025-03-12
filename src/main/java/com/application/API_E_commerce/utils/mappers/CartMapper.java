@@ -21,6 +21,8 @@ public interface CartMapper {
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "user", target = "user", qualifiedByName = "userToJpa"),
           @Mapping(source = "createdAt", target = "createdAt"),
+          @Mapping(source = "cartStatus", target = "cartStatus"),
+          @Mapping(source = "totalValue", target = "totalValue"),
           @Mapping(source = "items", target = "items", qualifiedByName = "cartItemsToJpa"),
   })
   JpaCartEntity toJpa(Cart domain);
@@ -29,6 +31,8 @@ public interface CartMapper {
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "user", target = "user", qualifiedByName = "userToDomain"),
           @Mapping(source = "createdAt", target = "createdAt"),
+          @Mapping(source = "cartStatus", target = "cartStatus"),
+          @Mapping(source = "totalValue", target = "totalValue"),
           @Mapping(source = "items", target = "items", qualifiedByName = "cartItemsToDomain")
   })
   Cart toDomain(JpaCartEntity jpa);

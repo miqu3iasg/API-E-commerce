@@ -11,6 +11,7 @@ import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItemUseCases;
 import com.application.API_E_commerce.domain.payment.Payment;
+import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
@@ -67,7 +68,7 @@ public class OrderServiceImplementation implements OrderUseCases {
 
     order.setItems(orderItems);
 
-    Payment payment = processPayment(createOrderCheckoutRequest.payment(), order);
+    Payment payment = processPayment(createOrderCheckoutRequest.paymentMethod(), order);
 
     orderItems.forEach(item -> {
       Product product = item.getProduct();
@@ -76,6 +77,7 @@ public class OrderServiceImplementation implements OrderUseCases {
     });
 
     order.setPayment(payment);
+    order.setStatus(OrderStatus.PAYMENT);
 
     return orderRepository.saveOrder(order);
   }
@@ -87,7 +89,7 @@ public class OrderServiceImplementation implements OrderUseCases {
     if (createOrderCheckoutRequest.items() == null || createOrderCheckoutRequest.items().isEmpty()) {
       throw new IllegalArgumentException("Order must have at least one item");
     }
-    if (createOrderCheckoutRequest.payment() == null || createOrderCheckoutRequest.payment().getPaymentMethod() == null) {
+    if (createOrderCheckoutRequest.paymentMethod() == null) {
       throw new IllegalArgumentException("Payment method must be specified");
     }
   }
@@ -98,7 +100,9 @@ public class OrderServiceImplementation implements OrderUseCases {
     }
   }
 
-  private Payment processPayment(Payment payment, Order order) {
+  private Payment processPayment(PaymentMethod paymentMethod, Order order) {
+    Payment payment = new Payment();
+    payment.setPaymentMethod(paymentMethod);
     payment.setOrder(order);
     payment.setStatus(PaymentStatus.PENDING);
     payment.setPaymentDate(LocalDateTime.now());

@@ -3,6 +3,7 @@ package com.application.API_E_commerce.domain.cart.cartitem;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.product.Product;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class CartItem {
@@ -16,6 +17,13 @@ public class CartItem {
 
   public CartItem(UUID id, Cart cart, Product product, int quantity) {
     this.id = id;
+    this.cart = cart;
+    this.product = product;
+    this.quantity = quantity;
+  }
+
+  public CartItem(Cart cart, Product product, int quantity) {
+    if (this.id == null) this.id = UUID.randomUUID();
     this.cart = cart;
     this.product = product;
     this.quantity = quantity;

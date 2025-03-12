@@ -6,6 +6,7 @@ import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.order.Order;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,8 +18,8 @@ public class User {
   private UserRole role;
   private LocalDateTime createdAt;
   private LocalDateTime lastLoginAt;
-  private List<Order> orders;
-  private List<Cart> carts;
+  private List<Order> orders = new ArrayList<>();
+  private List<Cart> carts = new ArrayList<>();
   private Address address;
 
   public User() {

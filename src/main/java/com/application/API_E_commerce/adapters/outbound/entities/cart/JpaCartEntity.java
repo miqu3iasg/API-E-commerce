@@ -2,12 +2,16 @@ package com.application.API_E_commerce.adapters.outbound.entities.cart;
 
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.cart.Cart;
+import com.application.API_E_commerce.domain.cart.CartStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,21 +30,18 @@ public class JpaCartEntity {
 
   private LocalDateTime createdAt;
 
-  @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<JpaCartItemEntity> items;
+  private CartStatus cartStatus;
 
-  public static JpaCartEntity fromDomain (
-          Cart cartDomain,
-          JpaUserEntity jpaUserEntity,
-          List<JpaCartItemEntity> jpaCartItems
-  ){
-    JpaCartEntity jpaCartEntity = new JpaCartEntity();
-    jpaCartEntity.id = cartDomain.getId();
-    jpaCartEntity.user = jpaUserEntity;
-    jpaCartEntity.createdAt = cartDomain.getCreatedAt();
-    jpaCartEntity.items = jpaCartItems;
+  private BigDecimal totalValue;
 
-    return jpaCartEntity;
+  @OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH }, orphanRemoval = true)
+  private List<JpaCartItemEntity> items = new ArrayList<>();
+
+  @PrePersist
+  public void generateUUID() {
+    if (id == null) {
+      id = UUID.randomUUID();
+    }
   }
 
   public UUID getId() {
@@ -65,6 +66,22 @@ public class JpaCartEntity {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public CartStatus getCartStatus() {
+    return cartStatus;
+  }
+
+  public void setCartStatus(CartStatus cartStatus) {
+    this.cartStatus = cartStatus;
+  }
+
+  public BigDecimal getTotalValue() {
+    return totalValue;
+  }
+
+  public void setTotalValue(BigDecimal totalValue) {
+    this.totalValue = totalValue;
   }
 
   public List<JpaCartItemEntity> getItems() {
