@@ -30,10 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -251,6 +248,49 @@ public class CartServiceTest {
       assertFalse(cart.getItems().isEmpty(), "The cart should not be empty");
       assertEquals(product, cart.getItems().getFirst().getProduct(), "The product in the cart should match");
     }
+  }
+
+  @Nested
+  class ListItemsInCart {
+
+    @Test
+    void shouldReturnCartItemsWhenValidInput() {
+      Product product = mockProductFactory();
+      User user = mockUserFactory();
+      Cart cart = mockCartFactory(user, product);
+
+      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+
+      List<CartItem> itemsInCart = cartService.getItemsInCart(user.getId(), cart.getId());
+
+      assertAll(
+              () -> assertNotNull(itemsInCart, "The result should not be null"),
+              () -> assertFalse(itemsInCart.isEmpty(), "The result should not be empty"),
+              () -> assertEquals(cart.getItems().size(), itemsInCart.size(), "The result should have the same size as the cart items"),
+              () -> assertIterableEquals(cart.getItems(), itemsInCart, "The result should be the same as the cart items"),
+              () -> assertThrows(UnsupportedOperationException.class, () -> itemsInCart.add(new CartItem()),
+                      "The result should be unmodifiable")
+      );
+    }
+
+    @Test
+    void shouldThrowWhenIdsAreNull() {
+      assertThrows(IllegalArgumentException.class, () -> cartService.getItemsInCart(null, UUID.randomUUID()));
+      assertThrows(IllegalArgumentException.class, () -> cartService.getItemsInCart(UUID.randomUUID(), null));
+    }
+
+    @Test
+    void shouldReturnEmptyListForCartWithEmptyItems() {
+      User user = mockUserFactory();
+      Product product = mockProductFactory();
+      Cart cart = mockCartFactory(user, product);
+      cart.setItems(List.of());
+
+      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+
+      assertTrue(cartService.getItemsInCart(user.getId(), cart.getId()).isEmpty());
+    }
+
   }
 
   private static Order mockOrderFactory(Cart cart, User user) {
