@@ -36,6 +36,10 @@ public class JpaOrderEntity {
 
   private BigDecimal totalValue;
 
+  private String currency;
+
+  private String description;
+
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaOrderItemEntity> items;
 
@@ -115,4 +119,21 @@ public class JpaOrderEntity {
   public void setPayment(JpaPaymentEntity payment) {
     this.payment = payment;
   }
+
+  public String getCurrency () {
+    return currency;
+  }
+
+  public void setCurrency ( String currency ) {
+    this.currency = currency;
+  }
+
+  public String getDescription () {
+    return description;
+  }
+
+  public void setDescription ( String description ) {
+    this.description = description;
+  }
+
 }

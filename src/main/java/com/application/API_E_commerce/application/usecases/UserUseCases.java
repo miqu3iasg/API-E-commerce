@@ -10,11 +10,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserUseCases {
-  User createUser(CreateUserRequestDTO createUserRequest);
-  Optional<User> findUserById(UUID userId);
-  void updateUserName(UUID userId, String updatedNameRequest);
-  void updatedUserPassword(UUID userId, String updatedPasswordRequest);
-  Address updateUserAddress(UUID userId, UpdateAddressRequestDTO updatedAddressRequest);
-  void deleteUser(UUID userId);
-  List<User> findAllUsers();
+
+  User createUser ( CreateUserRequestDTO createUserRequest );
+
+  Optional<User> findUserById ( UUID userId );
+
+  User updateUserName ( UUID userId, String updatedNameRequest );
+
+  void updatedUserPassword ( UUID userId, String updatedPasswordRequest );
+
+  Address updateUserAddress ( UUID userId, UpdateAddressRequestDTO updatedAddressRequest );
+
+  void deleteUser ( UUID userId );
+
+  List<User> findAllUsers ();
+
 }

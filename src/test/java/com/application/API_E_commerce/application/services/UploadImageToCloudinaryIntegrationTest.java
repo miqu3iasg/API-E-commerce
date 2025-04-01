@@ -5,6 +5,7 @@ import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -17,9 +18,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ActiveProfiles("test")
+@ActiveProfiles("dev")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
-public class UploadImageToCloudinaryIntegrationTest {
+class UploadImageToCloudinaryIntegrationTest {
 
   @Autowired
   private ProductRepository productRepository;

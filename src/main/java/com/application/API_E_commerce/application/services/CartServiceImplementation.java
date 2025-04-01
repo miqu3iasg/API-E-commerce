@@ -9,15 +9,14 @@ import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
-import com.application.API_E_commerce.domain.order.OrderStatus;
 import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
-import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.repository.UserRepository;
+import com.stripe.exception.StripeException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +25,11 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.*;
 
 @Slf4j
 @Component
 public class CartServiceImplementation implements CartUseCases {
+
   private final CartRepository cartRepository;
   private final ProductRepository productRepository;
   private final UserRepository userRepository;
@@ -57,30 +51,25 @@ public class CartServiceImplementation implements CartUseCases {
     this.orderRepository = orderRepository;
   }
 
-  private User validateIfUserExistsAndReturn(final UUID userId) {
+  private User validateIfUserExistsAndReturn ( final UUID userId ) {
     return userRepository
             .findUserById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User cannot be null."));
   }
 
-  private Product validateIfProductExistsAndReturn(final UUID productId) {
+  private Product validateIfProductExistsAndReturn ( final UUID productId ) {
     return productRepository
             .findProductById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Product cannot be null."));
   }
 
-  private Cart validateIfCartExistsAndReturn(UUID cartId) {
-    return this.cartRepository.findCartById(cartId)
-            .orElseThrow(() -> new IllegalArgumentException("Cart not found."));
+  private void validateInput ( final UUID userId, final UUID productId ) {
+    if ( userId == null ) throw new IllegalArgumentException("User id cannot be null");
+    if ( productId == null ) throw new IllegalArgumentException("Product id cannot be null");
   }
 
-  private void validateInput(final UUID userId, final UUID productId) {
-    if (userId == null) throw new IllegalArgumentException("User id cannot be null");
-    if (productId == null) throw new IllegalArgumentException("Product id cannot be null");
-  }
-
-  private Cart validateUserActiveCart(User user, UUID cartId) {
-    if (user.getCarts().isEmpty() || user.getCarts() == null) throw new IllegalArgumentException("User has no cart.");
+  private Cart validateUserActiveCart ( User user, UUID cartId ) {
+    if ( user.getCarts().isEmpty() || user.getCarts() == null ) throw new IllegalArgumentException("User has no cart.");
 
     return user.getCarts().stream()
             .filter(cart -> cart.getId().equals(cartId) && cart.getCartStatus() == CartStatus.ACTIVE)
@@ -90,10 +79,10 @@ public class CartServiceImplementation implements CartUseCases {
 
   @Override
   @Transactional
-  public Cart addProductToCart(final UUID userId, final UUID productId, int quantity) {
+  public Cart addProductToCart ( final UUID userId, final UUID productId, int quantity ) {
     validateInput(userId, productId);
 
-    if (quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0.");
+    if ( quantity <= 0 ) throw new IllegalArgumentException("Quantity must be greater than 0.");
 
     User user = validateIfUserExistsAndReturn(userId);
 
@@ -103,7 +92,7 @@ public class CartServiceImplementation implements CartUseCases {
 
     validateStockWithExistingQuantities(existingProduct, quantity, cart);
 
-    List<CartItem> items = (cart.getItems() != null) ? cart.getItems() : new ArrayList<>();
+    List<CartItem> items = ( cart.getItems() != null ) ? cart.getItems() : new ArrayList<>();
 
     items.stream()
             .filter(item -> item.getProduct().getId().equals(existingProduct.getId()))
@@ -113,7 +102,7 @@ public class CartServiceImplementation implements CartUseCases {
               this.cartItemRepository.saveCartItem(existingItem);
             }, () -> {
               CartItem item = new CartItem(cart, existingProduct, quantity);
-              if (cart.getItems() == null) cart.setItems(new ArrayList<>());
+              if ( cart.getItems() == null ) cart.setItems(new ArrayList<>());
               cart.getItems().add(item);
             });
 
@@ -128,14 +117,14 @@ public class CartServiceImplementation implements CartUseCases {
     return this.cartRepository.saveCart(cart);
   }
 
-  private Cart getOrCreateActiveCart(User user) {
+  private Cart getOrCreateActiveCart ( User user ) {
     return user.getCarts().stream()
             .filter(cart -> cart.getCartStatus() == CartStatus.ACTIVE)
             .findFirst()
             .orElseGet(() -> createNewCart(user));
   }
 
-  private Cart createNewCart(User user) {
+  private Cart createNewCart ( User user ) {
     Cart newCart = new Cart();
     newCart.setUser(user);
     newCart.setCartStatus(CartStatus.ACTIVE);
@@ -146,21 +135,21 @@ public class CartServiceImplementation implements CartUseCases {
     return newCart;
   }
 
-  private void validateStockWithExistingQuantities(Product product, int newQuantity, Cart cart) {
-    List<CartItem> items = (cart.getItems() != null) ? cart.getItems() : new ArrayList<>();
+  private void validateStockWithExistingQuantities ( Product product, int newQuantity, Cart cart ) {
+    List<CartItem> items = ( cart.getItems() != null ) ? cart.getItems() : new ArrayList<>();
     int existingQuantity = items
             .stream()
             .filter(item -> item.getProduct().getId().equals(product.getId()))
             .mapToInt(CartItem::getQuantity)
             .sum();
 
-    if (existingQuantity + newQuantity > product.getStock()) {
+    if ( existingQuantity + newQuantity > product.getStock() ) {
       throw new IllegalArgumentException("Product is out of stock.");
     }
   }
 
   @Override
-  public void removeProductFromCart(final UUID userId, final UUID productId, final UUID cartId) {
+  public void removeProductFromCart ( final UUID userId, final UUID productId, final UUID cartId ) {
     validateInput(userId, productId);
 
     User user = validateIfUserExistsAndReturn(userId);
@@ -179,7 +168,7 @@ public class CartServiceImplementation implements CartUseCases {
 
     items.removeIf(item -> item.getProduct().getId().equals(product.getId()));
 
-    if(quantityRemoved > 0) {
+    if ( quantityRemoved > 0 ) {
       product.setStock(product.getStock() + quantityRemoved);
       BigDecimal totalValueAfterRemoval = product.getPrice().multiply(BigDecimal.valueOf(quantityRemoved));
       cart.setTotalValue(cart.getTotalValue().subtract(totalValueAfterRemoval));
@@ -192,41 +181,57 @@ public class CartServiceImplementation implements CartUseCases {
     this.cartRepository.saveCart(cart);
   }
 
-  private static void validatesWhetherThereAreProductsInUserCart(User user) {
-    if (user.getCarts().stream()
+  private static void validatesWhetherThereAreProductsInUserCart ( User user ) {
+    if ( user.getCarts().stream()
             .filter(cart -> cart.getCartStatus() == CartStatus.ACTIVE)
             .map(Cart::getItems)
             .mapToInt(List::size)
-            .sum() == 0) {
+            .sum() == 0 ) {
       throw new IllegalArgumentException("Cart has no products.");
     }
   }
 
   @Override
-  public void updateProductQuantityInCart(final UUID userId, final UUID productId, int quantity) {
+  public void clearCart ( final UUID userId, final UUID cartId ) {
+    BigDecimal totalValueAfterClear = BigDecimal.valueOf(0.0);
 
+    User user = validateIfUserExistsAndReturn(userId);
+
+    Cart cart = validateUserActiveCart(user, cartId);
+
+    // estou tentando arrumar alguma maneira de atualizar o estoque de cada produto do carrinho individualmente após a limpeza.
+    for ( CartItem item : cart.getItems() ) {
+      int quantityRemovedForEvenItem = cart.getItems().stream()
+              .mapToInt(CartItem::getQuantity)
+              .sum();
+
+      item.getProduct().setStock(item.getProduct().getStock() + quantityRemovedForEvenItem);
+    }
+
+    cart.setItems(Collections.emptyList());
+    cart.setCartStatus(CartStatus.ABANDONED);
+    cart.setTotalValue(totalValueAfterClear);
+
+    // Deve atualizar o estoque dos produtos após a limpeza do carrinho.
+
+    this.cartRepository.saveCart(cart);
   }
 
   @Override
-  public void clearCart(final UUID userId) {
-
-  }
-
-  @Override
-  public void checkoutCart(final UUID userId, final UUID cartId, PaymentMethod paymentMethod) {
+  public void checkoutCart ( final UUID userId, final UUID cartId, PaymentMethod paymentMethod ) {
     validateInput(userId, cartId);
     validatePaymentMethod(paymentMethod);
 
     User user = validateIfUserExistsAndReturn(userId);
     Cart activeCart = validateUserActiveCart(user, cartId);
 
-    if (activeCart.getItems().isEmpty()) {
+    if ( activeCart.getItems().isEmpty() ) {
       throw new IllegalArgumentException("User has no products in cart.");
     }
 
     List<OrderItem> orderItems = convertCartItemsToOrderItems(activeCart.getItems());
 
-    CreateOrderCheckoutDTO createOrderCheckoutRequest = new CreateOrderCheckoutDTO (
+    CreateOrderCheckoutDTO createOrderCheckoutRequest = new CreateOrderCheckoutDTO(
             user, orderItems, paymentMethod
     );
 
@@ -235,48 +240,55 @@ public class CartServiceImplementation implements CartUseCases {
 
   @Transactional(rollbackOn = Exception.class)
   private void processOrder(CreateOrderCheckoutDTO createOrderCheckoutRequest, Cart cart) {
-    Order order = this.orderUseCases.createOrderCheckout(createOrderCheckoutRequest);
+    try {
+      Order order = this.orderUseCases.createOrderCheckout(createOrderCheckoutRequest);
 
-    order.getItems().forEach(item -> item.setOrder(order));
-    cart.setCartStatus(CartStatus.COMPLETED);
-    cart.getUser().getOrders().add(order);
+      order.getItems().forEach(item -> item.setOrder(order));
+      cart.setCartStatus(CartStatus.COMPLETED);
+      cart.getUser().getOrders().add(order);
 
-    this.orderRepository.saveOrder(order);
-    this.cartRepository.saveCart(cart);
-    this.userRepository.saveUser(cart.getUser());
+      this.orderRepository.saveOrder(order);
+      this.cartRepository.saveCart(cart);
+      this.userRepository.saveUser(cart.getUser());
+    } catch ( Exception e) {
+      throw new IllegalArgumentException("An error occurred while processing the order: " + e.getMessage(), e);
+    }
   }
 
-  private List<OrderItem> convertCartItemsToOrderItems(List<CartItem> cartItems) {
+  private List<OrderItem> convertCartItemsToOrderItems ( List<CartItem> cartItems ) {
     return cartItems.stream()
             .map(item -> new OrderItem(item.getProduct(), item.getQuantity(), item.getProduct().getPrice()))
             .toList();
   }
 
-  public void validatePaymentMethod(PaymentMethod paymentMethod) {
-    if (paymentMethod == null) throw new IllegalArgumentException("Payment method cannot be null.");
+  public void validatePaymentMethod ( PaymentMethod paymentMethod ) {
+    if ( paymentMethod == null ) throw new IllegalArgumentException("Payment method cannot be null.");
 
-    Set<String> validMethods = Set.of (
-            PaymentMethod.CREDIT_CARD.toString(),
-            PaymentMethod.DEBIT_CARD.toString(),
+    Set<String> validMethods = Set.of(
+            PaymentMethod.CARD.toString(),
+            PaymentMethod.BOLETO.toString(),
+            PaymentMethod.APPLE_PAY.toString(),
+            PaymentMethod.GOOGLE_PAY.toString(),
             PaymentMethod.PAYPAL.toString(),
             PaymentMethod.PIX.toString()
     );
 
-    if (!validMethods.contains(paymentMethod.toString())) {
+    if ( ! validMethods.contains(paymentMethod.toString()) ) {
       throw new IllegalArgumentException("Invalid payment method.");
     }
   }
 
   @Override
-  public List<CartItem> getItemsInCart(UUID userId, UUID cartId) {
+  public List<CartItem> getItemsInCart ( UUID userId, UUID cartId ) {
     validateInput(userId, cartId);
 
     User user = validateIfUserExistsAndReturn(userId);
     Cart cart = validateUserActiveCart(user, cartId);
 
     return Optional.ofNullable(cart.getItems())
-            .filter(items -> !items.isEmpty())
+            .filter(items -> ! items.isEmpty())
             .map(Collections::unmodifiableList)
             .orElseGet(Collections::emptyList);
   }
+
 }

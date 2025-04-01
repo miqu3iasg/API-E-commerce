@@ -1,15 +1,20 @@
 package com.application.API_E_commerce.domain.payment;
 
 public enum PaymentMethod {
-  CREDIT_CARD("credit card"), DEBIT_CARD("debit card"), PAYPAL("paypal"), PIX("pix");
+  CARD("card"),
+  BOLETO("boleto"),
+  PIX("pix"),
+  PAYPAL("paypal"),
+  APPLE_PAY("apple_pay"),
+  GOOGLE_PAY("google_pay");
 
-  private final String paymentMethod;
+  private final String stripeMethod;
 
-  PaymentMethod(String paymentMethod) {
-    this.paymentMethod = paymentMethod;
+  PaymentMethod ( String stripeMethod ) {
+    this.stripeMethod = stripeMethod;
   }
 
-  public String getPaymentMethod() {
-    return paymentMethod;
+  public String getStripeMethod () {
+    return stripeMethod;
   }
 }

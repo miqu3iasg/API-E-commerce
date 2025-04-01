@@ -20,6 +20,8 @@ public interface OrderMapper {
           @Mapping(source = "status", target = "status"),
           @Mapping(source = "orderDate", target = "orderDate"),
           @Mapping(source = "totalValue", target = "totalValue"),
+          @Mapping(source = "currency", target = "currency"),
+          @Mapping(source = "description", target = "description"),
           @Mapping(source = "items", target = "items", qualifiedByName = "orderItemsToJpa"),
           @Mapping(source = "payment", target = "payment", qualifiedByName = "paymentToJpa"),
   })
@@ -31,6 +33,8 @@ public interface OrderMapper {
           @Mapping(source = "status", target = "status"),
           @Mapping(source = "orderDate", target = "orderDate"),
           @Mapping(source = "totalValue", target = "totalValue"),
+          @Mapping(source = "currency", target = "currency"),
+          @Mapping(source = "description", target = "description"),
           @Mapping(source = "items", target = "items", qualifiedByName = "orderItemsToDomain"),
           @Mapping(source = "payment", target = "payment", qualifiedByName = "paymentToDomain"),
   })

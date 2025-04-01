@@ -15,6 +15,8 @@ public class Order {
   private OrderStatus status;
   private LocalDateTime orderDate;
   private BigDecimal totalValue;
+  private String currency;
+  private String description;
   private List<OrderItem> items;
   private Payment payment;
 
@@ -92,4 +94,21 @@ public class Order {
   public void setPayment(Payment payment) {
     this.payment = payment;
   }
+
+  public String getCurrency () {
+    return currency;
+  }
+
+  public void setCurrency ( String currency ) {
+    this.currency = currency;
+  }
+
+  public String getDescription () {
+    return description;
+  }
+
+  public void setDescription ( String description ) {
+    this.description = description;
+  }
+
 }

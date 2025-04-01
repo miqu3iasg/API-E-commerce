@@ -9,12 +9,12 @@ import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,27 +26,29 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
-@ActiveProfiles("test")
+@ActiveProfiles("dev")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
 class ProductServiceIntegrationTest {
 
   @Autowired
-  private ProductRepository productRepository;
+  ProductRepository productRepository;
 
   @Autowired
-  private CategoryRepository categoryRepository;
+  CategoryRepository categoryRepository;
 
   @Autowired
-  private ProductUseCases productService;
+  ProductUseCases productService;
 
   @Autowired
-  private CategoryUseCases categoryService;
+  CategoryUseCases categoryService;
 
   @Nested
   class CreateProduct {
+
     @Test
     @DisplayName("Should create a product successfully with valid inputs")
-    void shouldCreateProductSuccessfully() {
+    void shouldCreateProductSuccessfully () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
 
       Product product = productService.createProduct(createProductRequest);
@@ -67,13 +69,15 @@ class ProductServiceIntegrationTest {
       assertEquals(0, product.getPrice().compareTo(BigDecimal.valueOf(20.0)), "The product price should match");
       assertEquals(product.getStock(), savedProduct.getStock(), "The product stock should match");
     }
+
   }
 
   @Nested
   class ListProduct {
+
     @Test
     @DisplayName("Should return a list of product images when the product exists")
-    void shouldReturnListOfProductImagesWhenProductExists() {
+    void shouldReturnListOfProductImagesWhenProductExists () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -87,6 +91,7 @@ class ProductServiceIntegrationTest {
       assertTrue(images.contains("image1.jpg"), "The product should contain image1.jpg");
       assertTrue(images.contains("image2.jpg"), "The product should contain image2.jpg");
     }
+
   }
 
   @Nested
@@ -94,7 +99,7 @@ class ProductServiceIntegrationTest {
 
     @Test
     @DisplayName("Should update the product details when the product exists")
-    void shouldUpdateProductDetailsWhenProductExists() {
+    void shouldUpdateProductDetailsWhenProductExists () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -122,7 +127,7 @@ class ProductServiceIntegrationTest {
 
     @Test
     @DisplayName("Should update the product stock after a sale when the product exists")
-    void shouldUpdateProductStockAfterSaleWhenProductExists() {
+    void shouldUpdateProductStockAfterSaleWhenProductExists () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -135,6 +140,7 @@ class ProductServiceIntegrationTest {
       assertNotNull(updatedProduct, "The updated product should not be null");
       assertEquals(7, updatedProduct.getStock(), "The product stock should be updated correctly");
     }
+
   }
 
   @Nested
@@ -143,7 +149,7 @@ class ProductServiceIntegrationTest {
     @Test
     @Transactional
     @DisplayName("Should associate a product to a category when both product and category exist")
-    void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist() {
+    void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -167,7 +173,7 @@ class ProductServiceIntegrationTest {
 
     @Test
     @DisplayName("Should return the product category when the product exists")
-    void shouldReturnProductCategoryWhenProductExists() {
+    void shouldReturnProductCategoryWhenProductExists () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -186,7 +192,7 @@ class ProductServiceIntegrationTest {
     @Test
     @Transactional
     @DisplayName("Should remove the product from the category when both product and category exist")
-    void shouldRemoveProductFromCategoryWhenProductAndCategoryExist() {
+    void shouldRemoveProductFromCategoryWhenProductAndCategoryExist () {
       CreateProductRequestDTO createProductRequest = createProductRequestFactory();
       Product product = productService.createProduct(createProductRequest);
 
@@ -214,9 +220,10 @@ class ProductServiceIntegrationTest {
       assertNotNull(updatedProduct, "The updated product should not be null");
       assertNull(updatedProduct.getCategory(), "The product should no longer have a category");
     }
+
   }
 
-  private CreateProductRequestDTO createProductRequestFactory() {
+  private CreateProductRequestDTO createProductRequestFactory () {
     return new CreateProductRequestDTO(
             "Test Name",
             "Test description",
@@ -225,8 +232,9 @@ class ProductServiceIntegrationTest {
     );
   }
 
-  private CreateCategoryRequestDTO createCategoryRequestFactory() {
+  private CreateCategoryRequestDTO createCategoryRequestFactory () {
     return new CreateCategoryRequestDTO("Category name", "Category description");
   }
+
 }
 

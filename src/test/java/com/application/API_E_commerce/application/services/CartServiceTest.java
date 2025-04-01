@@ -10,12 +10,12 @@ import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
-import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
 import com.application.API_E_commerce.domain.user.repository.UserRepository;
+import com.stripe.exception.StripeException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Nested;
@@ -25,39 +25,41 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class CartServiceTest {
 
-  @InjectMocks private CartServiceImplementation cartService;
+  @InjectMocks
+  private CartServiceImplementation cartService;
 
-  @Mock private CartRepository cartRepository;
+  @Mock
+  private CartRepository cartRepository;
 
-  @Mock private ProductRepository productRepository;
+  @Mock
+  private ProductRepository productRepository;
 
-  @Mock private UserRepository userRepository;
+  @Mock
+  private UserRepository userRepository;
 
-  @Mock private OrderUseCases orderUseCases;
+  @Mock
+  private OrderUseCases orderUseCases;
 
-  @Mock private OrderRepository orderRepository;
+  @Mock
+  private OrderRepository orderRepository;
 
   @Nested
   class AddProductToCart {
+
     @Test
     @Transactional
-    void shouldAddProductInCartWhenUserAndProductExists() {
+    void shouldAddProductInCartWhenUserAndProductExists () {
       Product mockProduct = mockProductFactory();
       mockProduct.setStock(10);
 
@@ -93,12 +95,14 @@ public class CartServiceTest {
       assertEquals(mockUser, cart.getUser());
       assertNotNull(cart.getId());
     }
+
   }
 
   @Nested
   class RemoveProductFromCart {
+
     @Test
-    void shouldRemoveProductFromCartWhenUserAndProductExists() {
+    void shouldRemoveProductFromCartWhenUserAndProductExists () {
       User user = mockUserFactory();
 
       Product product = mockProductFactory();
@@ -120,7 +124,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfInputIsInvalid() {
+    void shouldThrowExceptionIfInputIsInvalid () {
       Product product = mockProductFactory();
       User user = mockUserFactory();
       Cart cart = mockCartFactory(user, product);
@@ -130,7 +134,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfCartDoesNotExist() {
+    void shouldThrowExceptionIfCartDoesNotExist () {
       Product product = mockProductFactory();
       User user = mockUserFactory();
       UUID cartId = UUID.randomUUID();
@@ -138,7 +142,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfProductIsNotInCart() {
+    void shouldThrowExceptionIfProductIsNotInCart () {
       User user = mockUserFactory();
       Product product = mockProductFactory();
       Cart cart = mockCartFactory(user, null);
@@ -147,14 +151,16 @@ public class CartServiceTest {
 
       assertThrows(IllegalArgumentException.class, () -> cartService.removeProductFromCart(user.getId(), product.getId(), cart.getId()));
     }
+
   }
 
   @Nested
   class CheckoutCart {
+
     @Test
-    void shouldThrowExceptionWhenUserIdIsNull() {
+    void shouldThrowExceptionWhenUserIdIsNull () {
       UUID cartId = UUID.randomUUID();
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
       assertThrows(IllegalArgumentException.class, () ->
               cartService.checkoutCart(null, cartId, validPaymentMethod)
@@ -162,9 +168,9 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenCartIdIsNull() {
+    void shouldThrowExceptionWhenCartIdIsNull () {
       UUID userId = UUID.randomUUID();
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
       assertThrows(IllegalArgumentException.class, () ->
               cartService.checkoutCart(userId, null, validPaymentMethod)
@@ -172,7 +178,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenPaymentMethodIsNull() {
+    void shouldThrowExceptionWhenPaymentMethodIsNull () {
       UUID userId = UUID.randomUUID();
       UUID cartId = UUID.randomUUID();
 
@@ -182,7 +188,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenPaymentMethodIsInvalid() {
+    void shouldThrowExceptionWhenPaymentMethodIsInvalid () {
       UUID userId = UUID.randomUUID();
       UUID cartId = UUID.randomUUID();
 
@@ -192,10 +198,10 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenUserDoesNotExist() {
+    void shouldThrowExceptionWhenUserDoesNotExist () {
       UUID userId = UUID.randomUUID();
       UUID cartId = UUID.randomUUID();
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
       assertThrows(IllegalArgumentException.class, () ->
               cartService.checkoutCart(userId, cartId, validPaymentMethod)
@@ -203,9 +209,9 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenCartDoesNotExist() {
+    void shouldThrowExceptionWhenCartDoesNotExist () {
       UUID cartId = UUID.randomUUID();
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
       User user = mockUserFactory();
 
       when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
@@ -216,8 +222,8 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenCartIsEmpty() {
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+    void shouldThrowExceptionWhenCartIsEmpty () {
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
       User user = mockUserFactory();
       Cart cart = mockCartFactory(user, null);
@@ -231,8 +237,8 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldProcessCheckoutSuccessfully() {
-      PaymentMethod validPaymentMethod = PaymentMethod.CREDIT_CARD;
+    void shouldProcessCheckoutSuccessfully () throws StripeException {
+      PaymentMethod validPaymentMethod = PaymentMethod.CARD;
       User user = mockUserFactory();
       Product product = mockProductFactory();
       Cart cart = mockCartFactory(user, product);
@@ -252,13 +258,14 @@ public class CartServiceTest {
       assertFalse(cart.getItems().isEmpty(), "The cart should not be empty");
       assertEquals(product, cart.getItems().getFirst().getProduct(), "The product in the cart should match");
     }
+
   }
 
   @Nested
   class ListItemsInCart {
 
     @Test
-    void shouldReturnCartItemsWhenValidInput() {
+    void shouldReturnCartItemsWhenValidInput () {
       Product product = mockProductFactory();
       User user = mockUserFactory();
       Cart cart = mockCartFactory(user, product);
@@ -278,13 +285,13 @@ public class CartServiceTest {
     }
 
     @Test
-    void shouldThrowWhenIdsAreNull() {
+    void shouldThrowWhenIdsAreNull () {
       assertThrows(IllegalArgumentException.class, () -> cartService.getItemsInCart(null, UUID.randomUUID()));
       assertThrows(IllegalArgumentException.class, () -> cartService.getItemsInCart(UUID.randomUUID(), null));
     }
 
     @Test
-    void shouldReturnEmptyListForCartWithEmptyItems() {
+    void shouldReturnEmptyListForCartWithEmptyItems () {
       User user = mockUserFactory();
       Product product = mockProductFactory();
       Cart cart = mockCartFactory(user, product);
@@ -297,10 +304,33 @@ public class CartServiceTest {
 
   }
 
-  private static Order mockOrderFactory(Cart cart, User user) {
+  @Nested
+  class ClearCart {
+
+    @Test
+    void shouldRemoveItemsInCartWithCartAndUserExists () {
+      User user = mockUserFactory();
+      Product product = mockProductFactory();
+      Cart cart = mockCartFactory(user, product);
+
+      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+
+      cartService.clearCart(user.getId(), cart.getId());
+
+      assertNotNull(cart);
+      assertNotNull(cart.getId());
+      assertNotNull(cart.getUser());
+      assertEquals(CartStatus.ABANDONED, cart.getCartStatus());
+      assertEquals(Collections.emptyList(), cart.getItems(), "Should return a empty list.");
+      assertEquals(0, cart.getItems().size(), "The size of cart items list should be zero.");
+    }
+
+  }
+
+  private static Order mockOrderFactory ( Cart cart, User user ) {
     List<OrderItem> orderItems = cart.getItems().stream()
             .map(item -> new OrderItem(item.getProduct(), item.getQuantity(), item.getProduct().getPrice()))
-            .collect(Collectors.toList());
+            .toList();
 
     Order order = new Order();
     order.setId(UUID.randomUUID());
@@ -309,13 +339,13 @@ public class CartServiceTest {
     return order;
   }
 
-  private static Cart mockCartFactory(User user, Product product) {
+  private static Cart mockCartFactory ( User user, Product product ) {
     Cart cart = new Cart();
     cart.setId(UUID.randomUUID());
     cart.setUser(user);
     cart.setCartStatus(CartStatus.ACTIVE);
 
-    if (product != null) {
+    if ( product != null ) {
       CartItem item = new CartItem();
       item.setId(UUID.randomUUID());
       item.setCart(cart);
@@ -323,15 +353,14 @@ public class CartServiceTest {
       item.setQuantity(2);
       cart.setTotalValue(product.getPrice().multiply(BigDecimal.valueOf(2)));
       cart.setItems(List.of(item));
-    }
-    else cart.setItems(new ArrayList<>());
+    } else cart.setItems(new ArrayList<>());
 
     user.setCarts(List.of(cart));
 
     return cart;
   }
 
-  private static User mockUserFactory() {
+  private static User mockUserFactory () {
     User user = new User();
     user.setId(UUID.randomUUID());
     user.setName("Jhon Doe");
@@ -348,7 +377,7 @@ public class CartServiceTest {
     return user;
   }
 
-  private static Product mockProductFactory() {
+  private static Product mockProductFactory () {
     Product product = new Product();
     product.setId(UUID.randomUUID());
     product.setName("name");
@@ -361,4 +390,5 @@ public class CartServiceTest {
 
     return product;
   }
+
 }

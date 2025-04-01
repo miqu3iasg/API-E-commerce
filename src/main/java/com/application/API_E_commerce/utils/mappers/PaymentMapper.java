@@ -13,7 +13,11 @@ public interface PaymentMapper {
   @Mappings({
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "order", target = "order", ignore = true),
+          @Mapping(source = "amountInCents", target = "amountInCents"),
+          @Mapping(source = "description", target = "description"),
           @Mapping(source = "paymentMethod", target = "paymentMethod"),
+          @Mapping(source = "paymentMethodId", target = "paymentMethodId"),
+          @Mapping(source = "currency", target = "currency"),
           @Mapping(source = "status", target = "status"),
           @Mapping(source = "paymentDate", target = "paymentDate"),
   })
@@ -22,7 +26,11 @@ public interface PaymentMapper {
   @Mappings({
           @Mapping(source = "id", target = "id"),
           @Mapping(source = "order", target = "order", ignore = true),
+          @Mapping(source = "amountInCents", target = "amountInCents"),
+          @Mapping(source = "description", target = "description"),
           @Mapping(source = "paymentMethod", target = "paymentMethod"),
+          @Mapping(source = "paymentMethodId", target = "paymentMethodId"),
+          @Mapping(source = "currency", target = "currency"),
           @Mapping(source = "status", target = "status"),
           @Mapping(source = "paymentDate", target = "paymentDate"),
   })

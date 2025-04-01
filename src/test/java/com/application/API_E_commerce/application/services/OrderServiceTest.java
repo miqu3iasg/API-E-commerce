@@ -11,10 +11,12 @@ import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
+import com.application.API_E_commerce.domain.payment.PaymentRepository;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
+import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,24 +37,27 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
   @InjectMocks
-  private OrderServiceImplementation orderService;
+  OrderServiceImplementation orderService;
 
   @Mock
-  private OrderRepository orderRepository;
+  OrderRepository orderRepository;
 
   @Mock
-  private ProductUseCases productService;
+  ProductUseCases productService;
 
   @Mock
-  private UserUseCases userService;
+  UserUseCases userService;
 
   @Mock
-  private PaymentUseCases paymentService;
+  PaymentUseCases paymentService;
+
+  @Mock
+  PaymentRepository paymentRepository;
 
   @Nested
   class CreateOrderCheckout {
     @Test
-    void shouldCreateCheckoutWithValidRequestSuccessfully() {
+    void shouldCreateCheckoutWithValidRequestSuccessfully() throws StripeException {
       User user = mockUserFactory();
 
       Product product = mockProductFactory();
@@ -66,13 +71,11 @@ class OrderServiceTest {
       List<OrderItem> items = List.of(orderItem);
 
       Payment payment = new Payment();
-      payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+      payment.setPaymentMethod(PaymentMethod.CARD);
       payment.setStatus(PaymentStatus.PENDING);
       payment.setPaymentDate(LocalDateTime.now());
 
-      when(paymentService.processPayment(any(Payment.class))).thenReturn(payment);
-
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CREDIT_CARD);
+      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CARD);
 
       Order mockOrder = new Order();
       mockOrder.setId(UUID.randomUUID());
@@ -97,7 +100,7 @@ class OrderServiceTest {
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), PaymentMethod.CREDIT_CARD);
+      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), PaymentMethod.CARD);
 
       assertThrows(IllegalArgumentException.class, () -> orderService.createOrderCheckout(request));
     }

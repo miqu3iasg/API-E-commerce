@@ -9,13 +9,13 @@ import com.application.API_E_commerce.domain.order.OrderRepository;
 import com.application.API_E_commerce.domain.order.OrderStatus;
 import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
-import com.application.API_E_commerce.domain.order.orderitem.OrderItemUseCases;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
+import com.application.API_E_commerce.domain.payment.PaymentRepository;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import com.application.API_E_commerce.domain.user.User;
+import com.stripe.exception.StripeException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -32,21 +32,23 @@ public class OrderServiceImplementation implements OrderUseCases {
   private final UserUseCases userService;
   private final ProductUseCases productService;
   private final PaymentUseCases paymentService;
+  private final PaymentRepository paymentRepository;
 
   public OrderServiceImplementation(
           OrderRepository orderRepository,
           UserUseCases userService, ProductUseCases productService,
-          PaymentUseCases paymentService
+          PaymentUseCases paymentService, PaymentRepository paymentRepository
   ) {
     this.orderRepository = orderRepository;
     this.userService = userService;
     this.productService = productService;
     this.paymentService = paymentService;
+    this.paymentRepository = paymentRepository;
   }
 
   @Override
   @Transactional(rollbackOn = Exception.class)
-  public Order createOrderCheckout(CreateOrderCheckoutDTO createOrderCheckoutRequest) {
+  public Order createOrderCheckout(CreateOrderCheckoutDTO createOrderCheckoutRequest) throws StripeException {
     validateCreateOrderCheckoutRequest(createOrderCheckoutRequest);
 
     BigDecimal totalValue = createOrderCheckoutRequest.items().stream()
@@ -68,7 +70,9 @@ public class OrderServiceImplementation implements OrderUseCases {
 
     order.setItems(orderItems);
 
-    Payment payment = processPayment(createOrderCheckoutRequest.paymentMethod(), order);
+    Long amountInCents = totalValue.multiply(BigDecimal.valueOf(100)).longValueExact();
+
+    processPayment(createOrderCheckoutRequest.paymentMethod(), order, amountInCents);
 
     orderItems.forEach(item -> {
       Product product = item.getProduct();
@@ -76,7 +80,6 @@ public class OrderServiceImplementation implements OrderUseCases {
       product.setStock(item.getProduct().getStock() - item.getQuantity());
     });
 
-    order.setPayment(payment);
     order.setStatus(OrderStatus.PAYMENT);
 
     return orderRepository.saveOrder(order);
@@ -100,13 +103,17 @@ public class OrderServiceImplementation implements OrderUseCases {
     }
   }
 
-  private Payment processPayment(PaymentMethod paymentMethod, Order order) {
+  private void processPayment( PaymentMethod paymentMethod, Order order, Long amountInCents) throws StripeException {
     Payment payment = new Payment();
     payment.setPaymentMethod(paymentMethod);
     payment.setOrder(order);
+    payment.setAmountInCents(amountInCents);
+    payment.setDescription(order.getDescription());
+    payment.setCurrency(order.getCurrency());
     payment.setStatus(PaymentStatus.PENDING);
     payment.setPaymentDate(LocalDateTime.now());
-    return paymentService.processPayment(payment);
+    paymentService.processPayment(payment);
+    paymentRepository.savePayment(payment);
   }
 
   @Override
