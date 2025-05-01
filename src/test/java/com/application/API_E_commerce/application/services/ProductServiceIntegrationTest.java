@@ -133,8 +133,7 @@ class ProductServiceIntegrationTest {
 
       int quantitySold = 3;
 
-      productService.updateStockAfterSale(product.getId(), quantitySold);
-
+      productService.decreaseProductStock(product.getId(), quantitySold);
 
       Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
       assertNotNull(updatedProduct, "The updated product should not be null");

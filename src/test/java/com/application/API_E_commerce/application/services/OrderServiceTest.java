@@ -16,6 +16,8 @@ import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
+import com.application.API_E_commerce.infrastructure.exceptions.order.EmptyOrderException;
+import com.application.API_E_commerce.infrastructure.exceptions.order.OrderNotFoundException;
 import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,159 +38,169 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
-  @InjectMocks
-  OrderServiceImplementation orderService;
 
-  @Mock
-  OrderRepository orderRepository;
+	@InjectMocks
+	OrderServiceImplementation orderService;
 
-  @Mock
-  ProductUseCases productService;
+	@Mock
+	OrderRepository orderRepository;
 
-  @Mock
-  UserUseCases userService;
+	@Mock
+	ProductUseCases productService;
 
-  @Mock
-  PaymentUseCases paymentService;
+	@Mock
+	UserUseCases userService;
 
-  @Mock
-  PaymentRepository paymentRepository;
+	@Mock
+	PaymentUseCases paymentService;
 
-  @Nested
-  class CreateOrderCheckout {
-    @Test
-    void shouldCreateCheckoutWithValidRequestSuccessfully() throws StripeException {
-      User user = mockUserFactory();
+	@Mock
+	PaymentRepository paymentRepository;
 
-      Product product = mockProductFactory();
-      when(productService.findProductById(product.getId())).thenReturn(Optional.of(product));
+	private User mockUserFactory () {
+		User user = new User();
+		user.setId(UUID.randomUUID());
+		user.setName("Jhon Doe");
+		user.setEmail("jhondoe@example.com");
+		user.setPassword("123");
+		user.setRole(UserRole.CUSTOMER_ROLE);
+		user.setAddress(new Address());
+		user.getAddress().setId(UUID.randomUUID());
+		user.getAddress().setStreet("street");
+		user.getAddress().setCity("city");
+		user.getAddress().setState("state");
+		user.getAddress().setZipCode("zipCode");
+		user.getAddress().setCountry("country");
+		return user;
+	}
 
-      OrderItem orderItem = new OrderItem();
-      orderItem.setProduct(product);
-      orderItem.setQuantity(5);
-      orderItem.setUnitPrice(product.getPrice());
+	private Product mockProductFactory () {
+		Product product = new Product();
+		product.setId(UUID.randomUUID());
+		product.setName("name");
+		product.setDescription("description");
+		product.setPrice(BigDecimal.valueOf(100.0));
+		product.setStock(10);
+		product.setCategory(null);
+		product.setImagesUrl(null);
+		product.setCreatedAt(null);
+		return product;
+	}
 
-      List<OrderItem> items = List.of(orderItem);
+	@Nested
+	class CreateOrderCheckout {
 
-      Payment payment = new Payment();
-      payment.setPaymentMethod(PaymentMethod.CARD);
-      payment.setStatus(PaymentStatus.PENDING);
-      payment.setPaymentDate(LocalDateTime.now());
+		@Test
+		void shouldCreateCheckoutWithValidRequestSuccessfully () throws StripeException {
+			User user = mockUserFactory();
 
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CARD);
+			Product product = mockProductFactory();
+			when(productService.findProductById(product.getId())).thenReturn(Optional.of(product));
 
-      Order mockOrder = new Order();
-      mockOrder.setId(UUID.randomUUID());
-      mockOrder.setUser(user);
-      mockOrder.setItems(items);
-      mockOrder.setPayment(payment);
-      mockOrder.setStatus(OrderStatus.PENDING);
-      mockOrder.setTotalValue(BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice()));
+			OrderItem orderItem = new OrderItem();
+			orderItem.setProduct(product);
+			orderItem.setQuantity(5);
+			orderItem.setUnitPrice(product.getPrice());
 
-      when(orderRepository.saveOrder(any(Order.class))).thenReturn(mockOrder);
+			List<OrderItem> items = List.of(orderItem);
 
-      Order order = orderService.createOrderCheckout(request);
+			Payment payment = new Payment();
+			payment.setPaymentMethod(PaymentMethod.CARD);
+			payment.setStatus(PaymentStatus.PENDING);
+			payment.setPaymentDate(LocalDateTime.now());
 
-      assertNotNull(order, "The order cannot be null!");
-      assertEquals(order.getUser(), user);
-      assertEquals(order.getItems(), items);
-      assertEquals(order.getPayment(), payment);
-      assertEquals(OrderStatus.PENDING, order.getStatus());
-      assertEquals(0, order.getTotalValue().compareTo(
-              BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice())));
-    }
+			CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CARD);
 
-    @Test
-    void shouldThrowExceptionWhenUserNotFound() {
-      CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), PaymentMethod.CARD);
+			Order mockOrder = new Order();
+			mockOrder.setId(UUID.randomUUID());
+			mockOrder.setUser(user);
+			mockOrder.setItems(items);
+			mockOrder.setPayment(payment);
+			mockOrder.setStatus(OrderStatus.PENDING);
+			mockOrder.setTotalValue(BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice()));
 
-      assertThrows(IllegalArgumentException.class, () -> orderService.createOrderCheckout(request));
-    }
-  }
+			when(orderRepository.saveOrder(any(Order.class))).thenReturn(mockOrder);
 
-  @Nested
-  class GetOrderDetails {
-    @Test
-    void shouldFetchAllOrderHistorySuccessfully() {
-      List<Order> expectedOrders = List.of(mockOrder(), mockOrder());
+			Order order = orderService.createOrderCheckout(request);
 
-      when(orderRepository.findAllOrders()).thenReturn(expectedOrders);
+			assertNotNull(order, "The order cannot be null!");
+			assertEquals(order.getUser(), user);
+			assertEquals(order.getItems(), items);
+			assertEquals(order.getPayment(), payment);
+			assertEquals(OrderStatus.PENDING, order.getStatus());
+			assertEquals(0, order.getTotalValue().compareTo(
+					BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice())));
+		}
 
-      List<Order> orders = orderService.fetchAllOrderHistory();
+		@Test
+		void shouldThrowExceptionWhenUserNotFound () {
+			CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(mockUserFactory(), List.of(), PaymentMethod.CARD);
 
-      assertEquals(expectedOrders, orders);
-    }
+			assertThrows(EmptyOrderException.class,
+					() -> orderService.createOrderCheckout(request));
+		}
 
-    @Nested
-    class CancelOrder {
-      @Test
-      void shouldCancelOrderWhenOrderExists() {
-        Order mockOrder = mockOrder();
-        UUID orderId = mockOrder.getId();
-        when(orderRepository.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
+	}
 
-        orderService.cancelOrder(orderId);
+	@Nested
+	class GetOrderDetails {
 
-        verify(orderRepository).deleteOrder(orderId);
+		@Test
+		void shouldFetchAllOrderHistorySuccessfully () {
+			List<Order> expectedOrders = List.of(mockOrder(), mockOrder());
 
-        when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+			when(orderRepository.findAllOrders()).thenReturn(expectedOrders);
 
-        Optional<Order> deletedOrder = orderRepository.findOrderById(orderId);
-        assertTrue(deletedOrder.isEmpty(), "The order still exists after cancellation!");
-      }
+			List<Order> orders = orderService.fetchAllOrderHistory();
 
-      @Test
-      void shouldThrowExceptionWhenOrderDoesNotExist() {
-        UUID orderId = UUID.randomUUID();
-        when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+			assertEquals(expectedOrders, orders);
+		}
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-          orderService.cancelOrder(orderId);
-        });
+		private Order mockOrder () {
+			Order order = new Order();
+			order.setId(UUID.randomUUID());
+			order.setStatus(OrderStatus.PENDING);
+			order.setTotalValue(BigDecimal.valueOf(10000.0));
+			order.setOrderDate(LocalDateTime.now());
+			return order;
+		}
 
-        assertEquals("Order cannot be null.", exception.getMessage());
+		@Nested
+		class CancelOrder {
 
-        verify(orderRepository, never()).deleteOrder(any());
-      }
-    }
+			@Test
+			void shouldCancelOrderWhenOrderExists () {
+				Order mockOrder = mockOrder();
+				UUID orderId = mockOrder.getId();
+				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
 
-    private Order mockOrder() {
-      Order order = new Order();
-      order.setId(UUID.randomUUID());
-      order.setStatus(OrderStatus.PENDING);
-      order.setTotalValue(BigDecimal.valueOf(10000.0));
-      order.setOrderDate(LocalDateTime.now());
-      return order;
-    }
-  }
+				orderService.cancelOrder(orderId);
 
-  private User mockUserFactory() {
-    User user = new User();
-    user.setId(UUID.randomUUID());
-    user.setName("Jhon Doe");
-    user.setEmail("jhondoe@example.com");
-    user.setPassword("123");
-    user.setRole(UserRole.CUSTOMER_ROLE);
-    user.setAddress(new Address());
-    user.getAddress().setId(UUID.randomUUID());
-    user.getAddress().setStreet("street");
-    user.getAddress().setCity("city");
-    user.getAddress().setState("state");
-    user.getAddress().setZipCode("zipCode");
-    user.getAddress().setCountry("country");
-    return user;
-  }
+				verify(orderRepository).deleteOrder(orderId);
 
-  private Product mockProductFactory() {
-    Product product = new Product();
-    product.setId(UUID.randomUUID());
-    product.setName("name");
-    product.setDescription("description");
-    product.setPrice(BigDecimal.valueOf(100.0));
-    product.setStock(10);
-    product.setCategory(null);
-    product.setImagesUrl(null);
-    product.setCreatedAt(null);
-    return product;
-  }
+				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+
+				Optional<Order> deletedOrder = orderRepository.findOrderById(orderId);
+				assertTrue(deletedOrder.isEmpty(), "The order still exists after cancellation!");
+			}
+
+			@Test
+			void shouldThrowExceptionWhenOrderDoesNotExist () {
+				UUID orderId = UUID.randomUUID();
+				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+
+				OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
+						() -> {
+							orderService.cancelOrder(orderId);
+						});
+
+				assertEquals("Order cannot be null.", exception.getMessage());
+
+				verify(orderRepository, never()).deleteOrder(any());
+			}
+
+		}
+
+	}
+
 }

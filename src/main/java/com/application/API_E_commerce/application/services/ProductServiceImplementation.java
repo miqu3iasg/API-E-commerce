@@ -8,6 +8,13 @@ import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDT
 import com.application.API_E_commerce.domain.product.dtos.ProductFiltersCriteria;
 import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
+import com.application.API_E_commerce.infrastructure.exceptions.NullParametersException;
+import com.application.API_E_commerce.infrastructure.exceptions.category.CategoryAlreadyExistsException;
+import com.application.API_E_commerce.infrastructure.exceptions.category.CategoryNotFoundException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.InvalidQuantityException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.ProductImageNotFoundException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.ProductNotFoundException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.ProductOutOfStockException;
 import com.application.API_E_commerce.utils.validators.CategoryValidator;
 import com.application.API_E_commerce.utils.validators.ProductValidator;
 import jakarta.transaction.Transactional;
@@ -26,213 +33,233 @@ import java.util.UUID;
 @Transactional(rollbackOn = Exception.class)
 public class ProductServiceImplementation implements ProductUseCases {
 
-  private final ProductRepository productRepository;
-  private final ProductValidator productValidator;
-  private final CategoryValidator categoryValidator;
-  private final CategoryRepository categoryRepository;
-  private final CloudinaryServiceImplementation cloudinaryServiceImplementation;
+	private final ProductRepository productRepository;
+	private final ProductValidator productValidator;
+	private final CategoryValidator categoryValidator;
+	private final CategoryRepository categoryRepository;
+	private final CloudinaryServiceImplementation cloudinaryServiceImplementation;
 
-  public ProductServiceImplementation (
-          ProductRepository productRepository,
-          ProductValidator productValidator,
-          CategoryValidator categoryValidator,
-          CategoryRepository categoryRepository,
-          CloudinaryServiceImplementation cloudinaryServiceImplementation
-  ) {
-    this.productRepository = productRepository;
-    this.productValidator = productValidator;
-    this.categoryValidator = categoryValidator;
-    this.categoryRepository = categoryRepository;
-    this.cloudinaryServiceImplementation = cloudinaryServiceImplementation;
-  }
+	public ProductServiceImplementation (
+			ProductRepository productRepository,
+			ProductValidator productValidator,
+			CategoryValidator categoryValidator,
+			CategoryRepository categoryRepository,
+			CloudinaryServiceImplementation cloudinaryServiceImplementation
+	) {
+		this.productRepository = productRepository;
+		this.productValidator = productValidator;
+		this.categoryValidator = categoryValidator;
+		this.categoryRepository = categoryRepository;
+		this.cloudinaryServiceImplementation = cloudinaryServiceImplementation;
+	}
 
-  private Product fetchExistingProduct ( UUID productId ) {
-    return this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
-  }
+	private Product fetchExistingProduct (UUID productId) {
+		return productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+	}
 
-  private Category fetchExistingCategory ( UUID categoryId ) {
-    return this.categoryValidator.validateIfCategoryExistsAndReturnTheExistingCategory(categoryId);
-  }
+	private Category fetchExistingCategory (UUID categoryId) {
+		return categoryValidator.validateIfCategoryExistsAndReturnTheExistingCategory(categoryId);
+	}
 
-  @Override
-  public Product createProduct ( CreateProductRequestDTO createProductRequest ) {
-    this.productValidator.validateCreateProductRequest(createProductRequest);
+	@Override
+	public Product createProduct (CreateProductRequestDTO createProductRequest) {
+		productValidator.validateCreateProductRequest(createProductRequest);
 
-    Product product = new Product();
-    product.setName(createProductRequest.name());
-    product.setDescription(createProductRequest.description());
-    product.setPrice(createProductRequest.price());
-    product.setStock(createProductRequest.stock());
-    product.setCreatedAt(LocalDateTime.now());
+		Product product = new Product();
+		product.setName(createProductRequest.name());
+		product.setDescription(createProductRequest.description());
+		product.setPrice(createProductRequest.price());
+		product.setStock(createProductRequest.stock());
+		product.setCreatedAt(LocalDateTime.now());
 
-    return this.productRepository.saveProduct(product);
-  }
+		return productRepository.saveProduct(product);
+	}
 
-  @Override
-  public Optional<Product> findProductById ( UUID productId ) {
-    return this.productRepository.findProductById(productId);
-  }
+	@Override
+	public Optional<Product> findProductById (UUID productId) {
+		return productRepository.findProductById(productId);
+	}
 
-  @Override
-  public List<Product> findAllProducts () {
-    return this.productRepository.findAllProducts();
-  }
+	@Override
+	public List<Product> findAllProducts () {
+		return productRepository.findAllProducts();
+	}
 
-  @Override
-  public void updateProduct ( UUID productId, UpdateProductRequestDTO updateProductRequest ) {
-    this.productRepository.findProductById(productId)
-            .ifPresentOrElse(
-                    existingProduct -> {
-                      updateProductRequest.name().ifPresent(existingProduct::setName);
-                      updateProductRequest.description().ifPresent(existingProduct::setDescription);
-                      updateProductRequest.price().ifPresent(existingProduct::setPrice);
-                      updateProductRequest.stock().ifPresent(existingProduct::setStock);
-                      updateProductRequest.category().ifPresent(existingProduct::setCategory);
+	@Override
+	public Product updateProduct (UUID productId, UpdateProductRequestDTO updateProductRequest) {
+		return productRepository.findProductById(productId)
+				.map(existingProduct -> {
+					updateProductRequest.name().ifPresent(existingProduct::setName);
+					updateProductRequest.description().ifPresent(existingProduct::setDescription);
+					updateProductRequest.price().ifPresent(existingProduct::setPrice);
+					updateProductRequest.stock().ifPresent(existingProduct::setStock);
+					updateProductRequest.category().ifPresent(existingProduct::setCategory);
 
-                      updateProductRequest.imagesUrl().ifPresent(newImages -> {
-                        List<String> currentImages = existingProduct.getImagesUrl() != null
-                                ? new ArrayList<>(existingProduct.getImagesUrl())
-                                : new ArrayList<>();
+					updateProductRequest.imagesUrl().ifPresent(newImages -> {
+						List<String> currentImages = existingProduct.getImagesUrl() != null
+								? new ArrayList<>(existingProduct.getImagesUrl())
+								: new ArrayList<>();
 
-                        currentImages.addAll(newImages);
+						currentImages.addAll(newImages);
 
-                        existingProduct.setImagesUrl(currentImages);
-                      });
-                      this.productRepository.saveProduct(existingProduct);
-                    },
-                    () -> { throw new IllegalArgumentException("Product was not found."); }
-            );
-  }
+						existingProduct.setImagesUrl(currentImages);
+					});
+					return productRepository.saveProduct(existingProduct);
+				})
+				.orElseThrow(() -> new ProductNotFoundException());
+	}
 
-  @Override
-  public void deleteProduct ( UUID productId ) {
-    this.productRepository.findProductById(productId)
-            .ifPresentOrElse(
-                    existingProduct -> this.productRepository.deleteProductById(productId),
-                    () -> { throw new IllegalArgumentException("Product was not found."); }
-            );
-  }
+	@Override
+	public void deleteProduct (UUID productId) {
+		productRepository.findProductById(productId)
+				.ifPresentOrElse(
+						existingProduct -> productRepository.deleteProductById(productId),
+						() -> {
+							throw new ProductNotFoundException();
+						}
+				);
+	}
 
-  @Override
-  @Transactional
-  public Product associateProductToCategory ( UUID productId, UUID categoryId ) {
-    Category category = this.categoryRepository.findCategoryById(categoryId)
-            .orElseThrow(() -> new IllegalArgumentException("Category was not found."));
+	@Override
+	@Transactional
+	public Product associateProductToCategory (UUID productId, UUID categoryId) {
+		Category category = categoryRepository.findCategoryById(categoryId)
+				.orElseThrow(() -> new CategoryNotFoundException("Category was not found."));
 
-    Product product = this.productRepository.findProductById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("Product was not found."));
+		Product product = productRepository.findProductById(productId)
+				.orElseThrow(() -> new ProductNotFoundException());
 
-    if ( product.getCategory() != null ) {
-      throw new IllegalArgumentException("Category already exists in product.");
-    }
+		if (product.getCategory() != null)
+			throw new CategoryAlreadyExistsException("Category already exists in product.");
 
-    category.getProducts().add(product);
+		category.getProducts().add(product);
 
-    product.setCategory(category);
+		product.setCategory(category);
 
-    return this.productRepository.saveProduct(product);
-  }
+		return productRepository.saveProduct(product);
+	}
 
-  @Override
-  public Category getProductCategory ( UUID productId ) {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+	@Override
+	public Category getProductCategory (UUID productId) {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    return product.getCategory();
-  }
+		return product.getCategory();
+	}
 
-  @Override
-  public Product removeProductFromCategory ( UUID productId ) {
-    return this.productRepository.findProductById(productId)
-            .map(existingProduct -> {
-              if ( existingProduct.getCategory() == null ) {
-                throw new IllegalArgumentException("Product category cannot be null.");
-              }
+	@Override
+	public Product removeProductFromCategory (UUID productId) {
+		return productRepository.findProductById(productId)
+				.map(existingProduct -> {
+					if (existingProduct.getCategory() == null)
+						throw new CategoryNotFoundException("Product category cannot be null.");
 
-              existingProduct.setCategory(null);
+					existingProduct.setCategory(null);
 
-              return productRepository.saveProduct(existingProduct);
-            }).orElseThrow(() -> new IllegalArgumentException("Product not found."));
-  }
+					return productRepository.saveProduct(existingProduct);
+				}).orElseThrow(() -> new ProductNotFoundException());
+	}
 
-  @Override
-  public void uploadProductImage ( UUID productId, List<String> imagesUrl ) throws IOException {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+	@Override
+	public void uploadProductImage (UUID productId, List<String> imagesUrl) throws IOException {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    List<String> existingImages = product.getImagesUrl() != null
-            ? new ArrayList<>(product.getImagesUrl())
-            : new ArrayList<>();
+		List<String> existingImages = product.getImagesUrl() != null
+				? new ArrayList<>(product.getImagesUrl())
+				: new ArrayList<>();
 
-    imagesUrl.forEach(imageUrl -> {
-      try {
-        this.uploadImageToCloudinary(imageUrl, productId);
-        existingImages.add(imageUrl);
-      } catch ( IOException e ) {
-        throw new RuntimeException("Error when upload image: " + imageUrl, e);
-      }
-    });
+		imagesUrl.forEach(imageUrl -> {
+			try {
+				uploadImageToCloudinary(imageUrl, productId);
+				existingImages.add(imageUrl);
+			} catch (IOException e) {
+				throw new RuntimeException("Error when upload image: " + imageUrl, e);
+			}
+		});
 
-    product.setImagesUrl(existingImages);
+		product.setImagesUrl(existingImages);
 
-    this.productRepository.saveProduct(product);
-  }
+		productRepository.saveProduct(product);
+	}
 
-  private void uploadImageToCloudinary ( String imageUrl, UUID productId ) throws IOException {
-    try {
-      this.cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, productId);
-      log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
-    } catch ( IOException exception ) {
-      log.error("Error uploading image to Cloudinary: {}", exception.getMessage());
-      throw exception;
-    }
-  }
+	private void uploadImageToCloudinary (String imageUrl, UUID productId) throws IOException {
+		try {
+			cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, productId);
+			log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
+		} catch (IOException exception) {
+			log.error("Error uploading image to Cloudinary: {}", exception.getMessage());
+			throw exception;
+		}
+	}
 
-  @Override
-  public List<String> getProductImages ( UUID productId ) {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
-    return product.getImagesUrl();
-  }
+	@Override
+	public List<String> getProductImages (UUID productId) {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+		return product.getImagesUrl();
+	}
 
-  @Override
-  public void deleteProductImage ( UUID productId ) throws IOException {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+	@Override
+	public void deleteProductImage (UUID productId) throws IOException, ProductImageNotFoundException {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    if ( product.getImagesUrl().isEmpty() || product.getImagesUrl() == null ) {
-      throw new IllegalArgumentException("Product image was not found.");
-    }
+		if (product.getImagesUrl().isEmpty() || product.getImagesUrl() == null)
+			throw new ProductImageNotFoundException("Product image was not found.");
 
-    this.cloudinaryServiceImplementation.deleteImageFromCloudinary(productId);
+		cloudinaryServiceImplementation.deleteImageFromCloudinary(productId);
 
-    product.setImagesUrl(null);
+		product.setImagesUrl(null);
 
-    productRepository.saveProduct(product);
+		productRepository.saveProduct(product);
 
-    log.info("Image removed from product {} and deleted from Cloudinary.", productId);
-  }
+		log.info("Image removed from product {} and deleted from Cloudinary.", productId);
+	}
 
-  @Override
-  public void updateStockAfterSale ( UUID productId, int quantitySold ) {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+	@Override
+	public void increaseProductStock (UUID productId, int quantityToIncrease) {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-    int actualStock = product.getStock();
+		int actualStock = product.getStock();
 
-    int stockAfterSale = actualStock - quantitySold;
+		if (quantityToIncrease <= 0)
+			throw new InvalidQuantityException("Quantity to increase must be greater than zero.");
 
-    product.setStock(stockAfterSale);
+		int stockAfterIncrease = actualStock + quantityToIncrease;
 
-    this.productRepository.saveProduct(product);
-  }
+		product.setStock(stockAfterIncrease);
 
-  @Override
-  public int getProductStock ( UUID productId ) {
-    Product product = this.productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+		productRepository.saveProduct(product);
+	}
 
-    return product.getStock();
-  }
+	@Override
+	public void decreaseProductStock (UUID productId, int quantityToDecrease) {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
 
-  @Override
-  public List<Product> filterProducts ( ProductFiltersCriteria criteria ) {
-    if ( criteria == null ) throw new IllegalArgumentException("The parameters can't be null.");
-    return this.productRepository.filterProducts(criteria);
-  }
+		int actualStock = product.getStock();
+
+		if (quantityToDecrease <= 0)
+			throw new InvalidQuantityException("Quantity to decrease must be greater than zero.");
+
+		if (actualStock - quantityToDecrease < 0)
+			throw new ProductOutOfStockException("Product stock cannot be negative.");
+
+		int stockAfterDecrease = actualStock - quantityToDecrease;
+
+		product.setStock(stockAfterDecrease);
+
+		productRepository.saveProduct(product);
+	}
+
+	@Override
+	public int getProductStock (UUID productId) {
+		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
+
+		return product.getStock();
+	}
+
+	@Override
+	public List<Product> filterProducts (ProductFiltersCriteria criteria) {
+		if (criteria == null)
+			throw new NullParametersException("The parameters can't be null.");
+		return productRepository.filterProducts(criteria);
+	}
 
 }

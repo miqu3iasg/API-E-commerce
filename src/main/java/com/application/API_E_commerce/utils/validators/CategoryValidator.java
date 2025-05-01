@@ -2,6 +2,7 @@ package com.application.API_E_commerce.utils.validators;
 
 import com.application.API_E_commerce.domain.category.Category;
 import com.application.API_E_commerce.domain.category.CategoryRepository;
+import com.application.API_E_commerce.infrastructure.exceptions.category.CategoryNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -9,19 +10,20 @@ import java.util.UUID;
 
 @Component
 public class CategoryValidator {
-  private final CategoryRepository categoryRepository;
 
-  public CategoryValidator(CategoryRepository categoryRepository) {
-    this.categoryRepository = categoryRepository;
-  }
+	private final CategoryRepository categoryRepository;
 
-  public Category validateIfCategoryExistsAndReturnTheExistingCategory(UUID categoryId) {
-    Optional<Category> categoryOptional = this.categoryRepository.findCategoryById(categoryId);
+	public CategoryValidator (CategoryRepository categoryRepository) {
+		this.categoryRepository = categoryRepository;
+	}
 
-    if (categoryOptional.isEmpty()) {
-      throw new IllegalArgumentException("Category was not found.");
-    }
+	public Category validateIfCategoryExistsAndReturnTheExistingCategory (UUID categoryId) {
+		Optional<Category> categoryOptional = categoryRepository.findCategoryById(categoryId);
 
-    return categoryOptional.get();
-  }
+		if (categoryOptional.isEmpty())
+			throw new CategoryNotFoundException("Category was not found.");
+
+		return categoryOptional.get();
+	}
+
 }

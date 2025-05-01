@@ -15,6 +15,11 @@ import com.application.API_E_commerce.domain.payment.PaymentRepository;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.product.Product;
 import com.application.API_E_commerce.domain.user.User;
+import com.application.API_E_commerce.infrastructure.exceptions.order.EmptyOrderException;
+import com.application.API_E_commerce.infrastructure.exceptions.order.OrderNotFoundException;
+import com.application.API_E_commerce.infrastructure.exceptions.payment.MissingPaymentMethodException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.ProductNotFoundException;
+import com.application.API_E_commerce.infrastructure.exceptions.user.UserNotFoundException;
 import com.stripe.exception.StripeException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -28,125 +33,124 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImplementation implements OrderUseCases {
-  private final OrderRepository orderRepository;
-  private final UserUseCases userService;
-  private final ProductUseCases productService;
-  private final PaymentUseCases paymentService;
-  private final PaymentRepository paymentRepository;
 
-  public OrderServiceImplementation(
-          OrderRepository orderRepository,
-          UserUseCases userService, ProductUseCases productService,
-          PaymentUseCases paymentService, PaymentRepository paymentRepository
-  ) {
-    this.orderRepository = orderRepository;
-    this.userService = userService;
-    this.productService = productService;
-    this.paymentService = paymentService;
-    this.paymentRepository = paymentRepository;
-  }
+	private final OrderRepository orderRepository;
+	private final UserUseCases userService;
+	private final ProductUseCases productService;
+	private final PaymentUseCases paymentService;
+	private final PaymentRepository paymentRepository;
 
-  @Override
-  @Transactional(rollbackOn = Exception.class)
-  public Order createOrderCheckout(CreateOrderCheckoutDTO createOrderCheckoutRequest) throws StripeException {
-    validateCreateOrderCheckoutRequest(createOrderCheckoutRequest);
+	public OrderServiceImplementation (
+			OrderRepository orderRepository,
+			UserUseCases userService, ProductUseCases productService,
+			PaymentUseCases paymentService, PaymentRepository paymentRepository
+	) {
+		this.orderRepository = orderRepository;
+		this.userService = userService;
+		this.productService = productService;
+		this.paymentService = paymentService;
+		this.paymentRepository = paymentRepository;
+	}
 
-    BigDecimal totalValue = createOrderCheckoutRequest.items().stream()
-            .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+	@Override
+	@Transactional(rollbackOn = Exception.class)
+	public Order createOrderCheckout (CreateOrderCheckoutDTO createOrderCheckoutRequest) throws StripeException {
+		validateCreateOrderCheckoutRequest(createOrderCheckoutRequest);
 
-    Order order = new Order();
-    order.setUser(createOrderCheckoutRequest.user());
-    order.setStatus(OrderStatus.PENDING);
-    order.setTotalValue(totalValue);
-    order.setOrderDate(LocalDateTime.now());
+		BigDecimal totalValue = createOrderCheckoutRequest.items().stream()
+				.map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    List<OrderItem> orderItems = createOrderCheckoutRequest.items().stream().map(item -> {
-      validateProduct(item.getProduct());
-      item.setOrder(order);
-      item.setUnitPrice(item.getProduct().getPrice());
-      return item;
-    }).collect(Collectors.toList());
+		Order order = new Order();
+		order.setUser(createOrderCheckoutRequest.user());
+		order.setStatus(OrderStatus.PENDING);
+		order.setTotalValue(totalValue);
+		order.setOrderDate(LocalDateTime.now());
 
-    order.setItems(orderItems);
+		List<OrderItem> orderItems = createOrderCheckoutRequest.items().stream().map(item -> {
+			validateProduct(item.getProduct());
+			item.setOrder(order);
+			item.setUnitPrice(item.getProduct().getPrice());
+			return item;
+		}).collect(Collectors.toList());
 
-    Long amountInCents = totalValue.multiply(BigDecimal.valueOf(100)).longValueExact();
+		order.setItems(orderItems);
 
-    processPayment(createOrderCheckoutRequest.paymentMethod(), order, amountInCents);
+		Long amountInCents = totalValue.multiply(BigDecimal.valueOf(100)).longValueExact();
 
-    orderItems.forEach(item -> {
-      Product product = item.getProduct();
-      productService.updateStockAfterSale(product.getId(), item.getQuantity());
-      product.setStock(item.getProduct().getStock() - item.getQuantity());
-    });
+		processPayment(createOrderCheckoutRequest.paymentMethod(), order, amountInCents);
 
-    order.setStatus(OrderStatus.PAYMENT);
+		orderItems.forEach(item -> {
+			Product product = item.getProduct();
+			productService.decreaseProductStock(product.getId(), item.getQuantity());
+			product.setStock(item.getProduct().getStock() - item.getQuantity());
+		});
 
-    return orderRepository.saveOrder(order);
-  }
+		order.setStatus(OrderStatus.PAYMENT);
 
-  private void validateCreateOrderCheckoutRequest(CreateOrderCheckoutDTO createOrderCheckoutRequest) {
-    if (createOrderCheckoutRequest.user() == null) {
-      throw new IllegalArgumentException("User cannot be null");
-    }
-    if (createOrderCheckoutRequest.items() == null || createOrderCheckoutRequest.items().isEmpty()) {
-      throw new IllegalArgumentException("Order must have at least one item");
-    }
-    if (createOrderCheckoutRequest.paymentMethod() == null) {
-      throw new IllegalArgumentException("Payment method must be specified");
-    }
-  }
+		return orderRepository.saveOrder(order);
+	}
 
-  private void validateProduct(Product product) {
-    if (product == null || productService.findProductById(product.getId()).isEmpty()) {
-      throw new IllegalArgumentException("Invalid product");
-    }
-  }
+	private void validateCreateOrderCheckoutRequest (CreateOrderCheckoutDTO createOrderCheckoutRequest) {
+		if (createOrderCheckoutRequest.user() == null)
+			throw new UserNotFoundException("User cannot be null");
+		if (createOrderCheckoutRequest.items() == null || createOrderCheckoutRequest.items().isEmpty())
+			throw new EmptyOrderException("Order must have at least one item");
+		if (createOrderCheckoutRequest.paymentMethod() == null)
+			throw new MissingPaymentMethodException("Payment method must be specified");
+	}
 
-  private void processPayment( PaymentMethod paymentMethod, Order order, Long amountInCents) throws StripeException {
-    Payment payment = new Payment();
-    payment.setPaymentMethod(paymentMethod);
-    payment.setOrder(order);
-    payment.setAmountInCents(amountInCents);
-    payment.setDescription(order.getDescription());
-    payment.setCurrency(order.getCurrency());
-    payment.setStatus(PaymentStatus.PENDING);
-    payment.setPaymentDate(LocalDateTime.now());
-    paymentService.processPayment(payment);
-    paymentRepository.savePayment(payment);
-  }
+	private void validateProduct (Product product) {
+		if (product == null || productService.findProductById(product.getId()).isEmpty())
+			throw new ProductNotFoundException("Invalid product");
+	}
 
-  @Override
-  public List<Order> fetchAllOrderHistory() {
-    return orderRepository.findAllOrders();
-  }
+	private void processPayment (PaymentMethod paymentMethod, Order order, Long amountInCents) throws StripeException {
+		Payment payment = new Payment();
+		payment.setPaymentMethod(paymentMethod);
+		payment.setOrder(order);
+		payment.setAmountInCents(amountInCents);
+		payment.setDescription(order.getDescription());
+		payment.setCurrency(order.getCurrency());
+		payment.setStatus(PaymentStatus.PENDING);
+		payment.setPaymentDate(LocalDateTime.now());
+		paymentService.processPayment(payment);
+		paymentRepository.savePayment(payment);
+	}
 
-  @Override
-  public List<Order> fetchOrderHistoryByUser(UUID userId) {
-    return userService.findUserById(userId)
-            .map(User::getOrders)
-            .orElseThrow(() -> new IllegalArgumentException("User not found."));
-  }
+	@Override
+	public List<Order> fetchAllOrderHistory () {
+		return orderRepository.findAllOrders();
+	}
 
-  @Override
-  public OrderStatus getOrderStatus(UUID orderId) {
-    Optional<Order> existingOrder = this.orderRepository.findOrderById(orderId);
+	@Override
+	public List<Order> fetchOrderHistoryByUser (UUID userId) {
+		return userService.findUserById(userId)
+				.map(User::getOrders)
+				.orElseThrow(UserNotFoundException::new);
+	}
 
-    if (existingOrder.isEmpty()) throw new IllegalArgumentException("Order cannot be null.");
+	@Override
+	public OrderStatus getOrderStatus (UUID orderId) {
+		Optional<Order> existingOrder = orderRepository.findOrderById(orderId);
 
-    return existingOrder.get().getStatus();
-  }
+		if (existingOrder.isEmpty())
+			throw new OrderNotFoundException("Order cannot be null.");
 
-  @Override
-  public Optional<Order> findOrderById(UUID orderId) {
-    return this.orderRepository.findOrderById(orderId);
-  }
+		return existingOrder.get().getStatus();
+	}
 
-  @Override
-  public void cancelOrder(UUID orderId) {
-    this.orderRepository.findOrderById(orderId).map(existingOrder -> {
-      orderRepository.deleteOrder(orderId);
-      return existingOrder;
-    }).orElseThrow(() -> new IllegalArgumentException("Order cannot be null."));
-  }
+	@Override
+	public Optional<Order> findOrderById (UUID orderId) {
+		return orderRepository.findOrderById(orderId);
+	}
+
+	@Override
+	public void cancelOrder (UUID orderId) {
+		orderRepository.findOrderById(orderId).map(existingOrder -> {
+			orderRepository.deleteOrder(orderId);
+			return existingOrder;
+		}).orElseThrow(() -> new OrderNotFoundException("Order cannot be null."));
+	}
+
 }

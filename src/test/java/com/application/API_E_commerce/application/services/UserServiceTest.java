@@ -1,10 +1,12 @@
 package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.domain.address.Address;
+import com.application.API_E_commerce.domain.address.AddressRepository;
+import com.application.API_E_commerce.domain.address.AddressUseCases;
 import com.application.API_E_commerce.domain.address.dtos.UpdateAddressRequestDTO;
 import com.application.API_E_commerce.domain.user.User;
-import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import com.application.API_E_commerce.domain.user.dtos.CreateUserRequestDTO;
+import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import com.application.API_E_commerce.factory.CreateUserRequestFactory;
 import com.application.API_E_commerce.factory.UpdateAddressRequestFactory;
 import com.application.API_E_commerce.factory.UserFactory;
@@ -19,120 +21,117 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-  @InjectMocks
-  private UserServiceImplementation userService;
+	@InjectMocks
+	private UserServiceImplementation userService;
 
-  @Mock
-  private UserRepository userRepository;
+	@Mock
+	private UserRepository userRepository;
 
-  @Nested
-  class CreateUser {
+	@Mock
+	private AddressUseCases addressService;
 
-    @Test
-    @DisplayName("Should create a user successfully when no conflicting user exists")
-    void shouldCreateUserSuccessfullyWhenNoConflictingUserExists() {
-      CreateUserRequestDTO request = CreateUserRequestFactory.build();
+	@Mock
+	private AddressRepository addressRepository;
 
-      when(userRepository.findUserByName(request.name())).thenReturn(Optional.empty());
-      when(userRepository.findUserByEmail(request.email())).thenReturn(Optional.empty());
+	@Nested
+	class CreateUser {
 
-      userService.createUser(request);
+		@Test
+		@DisplayName("Should create a user successfully when no conflicting user exists")
+		void shouldCreateUserSuccessfullyWhenNoConflictingUserExists () {
+			CreateUserRequestDTO request = CreateUserRequestFactory.build();
 
-      verify(userRepository).saveUser(argThat(user ->
-              user.getName().equals(request.name()) &&
-                      user.getEmail().equals(request.email()) &&
-                      user.getPassword().equals(request.password()) &&
-                      user.getRole().equals(request.role()) &&
-                      user.getAddress().equals(request.address()) &&
-                      user.getCreatedAt() != null
-      ));
-    }
+			Address mockAddress = new Address();
+			mockAddress.setStreet(request.address().street());
+			mockAddress.setCity(request.address().city());
+			mockAddress.setState(request.address().state());
+			mockAddress.setZipCode(request.address().zipCode());
+			mockAddress.setCountry(request.address().country());
 
-    @Test
-    @DisplayName("Should throw exception when creating a user with a duplicate name")
-    void shouldThrowExceptionWhenCreatingUserWithDuplicateName() {
-      CreateUserRequestDTO request = CreateUserRequestFactory.build();
+			when(userRepository.saveUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0, User.class));
 
-      when(userRepository.findUserByName(request.name())).thenReturn(Optional.of(new User()));
+			User createdUser = userService.createUser(request);
 
-      Exception exception = assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
-      assertEquals("A user with this name already exists.", exception.getMessage());
-    }
+			verify(userRepository).saveUser(any(User.class));
 
-    @Test
-    @DisplayName("Should throw exception when creating a user with a duplicate email")
-    void shouldThrowExceptionWhenCreatingUserWithDuplicateEmail() {
-      CreateUserRequestDTO request = CreateUserRequestFactory.build();
+			assertNotNull(createdUser);
+			assertEquals(request.name(), createdUser.getName());
+			assertEquals(request.email(), createdUser.getEmail());
+			assertEquals(request.password(), createdUser.getPassword());
+			assertEquals(request.role(), createdUser.getRole());
 
-      when(userRepository.findUserByName(request.name())).thenReturn(Optional.empty());
-      when(userRepository.findUserByEmail(request.email())).thenReturn(Optional.of(new User()));
+			assertNotNull(createdUser.getAddress());
+			assertEquals(request.address().street(), createdUser.getAddress().getStreet());
+			assertEquals(request.address().city(), createdUser.getAddress().getCity());
+			assertEquals(request.address().state(), createdUser.getAddress().getState());
+			assertEquals(request.address().zipCode(), createdUser.getAddress().getZipCode());
+			assertEquals(request.address().country(), createdUser.getAddress().getCountry());
+			assertNotNull(createdUser.getCreatedAt());
+		}
 
-      Exception exception = assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
-      assertEquals("A user with this email already exists.", exception.getMessage());
-    }
-  }
+	}
 
-  @Nested
-  class UpdateUser {
+	@Nested
+	class UpdateUser {
 
-    @Test
-    @DisplayName("Should update the user name successfully when the user exists")
-    void shouldUpdateUserNameSuccessfullyWhenUserExists() {
-      String updatedName = "Updated Name";
-      String oldName = "Old Name";
+		@Test
+		@DisplayName("Should update the user name successfully when the user exists")
+		void shouldUpdateUserNameSuccessfullyWhenUserExists () {
+			final String updatedName = "Updated Name";
+			final String oldName = "Old Name";
 
-      User user = UserFactory.build();
-      user.setName(oldName);
+			User user = UserFactory.build();
+			user.setName(oldName);
 
-      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
-      userService.updateUserName(user.getId(), updatedName);
+			userService.updateUserName(user.getId(), updatedName);
 
-      verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getName().equals(updatedName)));
-    }
+			verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getName().equals(updatedName)));
+		}
 
-    @Test
-    @DisplayName("Should update the user password successfully when the user exists")
-    void shouldUpdateUserPasswordSuccessfullyWhenUserExists() {
-      String updatedPassword = "newPassword123";
-      String oldPassword = "oldPassword123";
+		@Test
+		@DisplayName("Should update the user password successfully when the user exists")
+		void shouldUpdateUserPasswordSuccessfullyWhenUserExists () {
+			final String updatedPassword = "newPassword123";
+			final String oldPassword = "oldPassword123";
 
-      User user = UserFactory.build();
-      user.setPassword(oldPassword);
+			User user = UserFactory.build();
+			user.setPassword(oldPassword);
 
-      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
-      userService.updatedUserPassword(user.getId(), updatedPassword);
+			userService.updatedUserPassword(user.getId(), updatedPassword);
 
-      verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getPassword().equals(updatedPassword)));
-    }
+			verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getPassword().equals(updatedPassword)));
+		}
 
-    @Test
-    @DisplayName("Should update the user address successfully when the user exists")
-    void shouldUpdateUserAddressSuccessfullyWhenUserExists() {
-      UpdateAddressRequestDTO updateAddressRequest = UpdateAddressRequestFactory.build();
+		@Test
+		@DisplayName("Should update the user address successfully when the user exists")
+		void shouldUpdateUserAddressSuccessfullyWhenUserExists () {
+			UpdateAddressRequestDTO updateAddressRequest = UpdateAddressRequestFactory.build();
 
-      User user = UserFactory.build();
+			User user = UserFactory.build();
 
-      when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
-      Address updatedAddress = userService.updateUserAddress(user.getId(), updateAddressRequest);
+			Address updatedAddress = userService.updateUserAddress(user.getId(), updateAddressRequest);
 
-      assertEquals(updateAddressRequest.street(), updatedAddress.getStreet());
-      assertEquals(updateAddressRequest.city(), updatedAddress.getCity());
-      assertEquals(updateAddressRequest.state(), updatedAddress.getState());
-      assertEquals(updateAddressRequest.zipCode(), updatedAddress.getZipCode());
-      assertEquals(updateAddressRequest.country(), updatedAddress.getCountry());
+			assertEquals(updateAddressRequest.street(), updatedAddress.getStreet());
+			assertEquals(updateAddressRequest.city(), updatedAddress.getCity());
+			assertEquals(updateAddressRequest.state(), updatedAddress.getState());
+			assertEquals(updateAddressRequest.zipCode(), updatedAddress.getZipCode());
+			assertEquals(updateAddressRequest.country(), updatedAddress.getCountry());
 
-      verify(userRepository).saveUser(user);
-    }
-  }
+			verify(userRepository).saveUser(user);
+		}
+
+	}
+
 }

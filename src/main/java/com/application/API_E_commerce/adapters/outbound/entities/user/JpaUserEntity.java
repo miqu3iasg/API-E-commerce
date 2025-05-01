@@ -20,8 +20,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaUserEntity {
+
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
   private String name;
@@ -38,13 +39,13 @@ public class JpaUserEntity {
 
   private LocalDateTime lastLoginAt;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
   private List<JpaOrderEntity> orders = new ArrayList<>();
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<JpaCartEntity> carts = new ArrayList<>();
 
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH}, orphanRemoval = true)
   @JoinColumn(name = "address_id")
   private JpaAddressEntity address;
 
@@ -70,83 +71,84 @@ public class JpaUserEntity {
     return jpaUserEntity;
   }
 
-  public UUID getId() {
+  public UUID getId () {
     return id;
   }
 
-  public void setId(UUID id) {
+  public void setId ( UUID id ) {
     this.id = id;
   }
 
-  public String getName() {
+  public String getName () {
     return name;
   }
 
-  public void setName(String name) {
+  public void setName ( String name ) {
     this.name = name;
   }
 
-  public String getEmail() {
+  public String getEmail () {
     return email;
   }
 
-  public void setEmail(String email) {
+  public void setEmail ( String email ) {
     this.email = email;
   }
 
-  public String getPassword() {
+  public String getPassword () {
     return password;
   }
 
-  public void setPassword(String password) {
+  public void setPassword ( String password ) {
     this.password = password;
   }
 
-  public UserRole getRole() {
+  public UserRole getRole () {
     return role;
   }
 
-  public void setRole(UserRole role) {
+  public void setRole ( UserRole role ) {
     this.role = role;
   }
 
-  public LocalDateTime getCreatedAt() {
+  public LocalDateTime getCreatedAt () {
     return createdAt;
   }
 
-  public void setCreatedAt(LocalDateTime createdAt) {
+  public void setCreatedAt ( LocalDateTime createdAt ) {
     this.createdAt = createdAt;
   }
 
-  public LocalDateTime getLastLoginAt() {
+  public LocalDateTime getLastLoginAt () {
     return lastLoginAt;
   }
 
-  public void setLastLoginAt(LocalDateTime lastLoginAt) {
+  public void setLastLoginAt ( LocalDateTime lastLoginAt ) {
     this.lastLoginAt = lastLoginAt;
   }
 
-  public List<JpaOrderEntity> getOrders() {
+  public List<JpaOrderEntity> getOrders () {
     return orders;
   }
 
-  public void setOrders(List<JpaOrderEntity> orders) {
+  public void setOrders ( List<JpaOrderEntity> orders ) {
     this.orders = orders;
   }
 
-  public List<JpaCartEntity> getCarts() {
+  public List<JpaCartEntity> getCarts () {
     return carts;
   }
 
-  public void setCarts(List<JpaCartEntity> carts) {
+  public void setCarts ( List<JpaCartEntity> carts ) {
     this.carts = carts;
   }
 
-  public JpaAddressEntity getAddress() {
+  public JpaAddressEntity getAddress () {
     return address;
   }
 
-  public void setAddress(JpaAddressEntity address) {
+  public void setAddress ( JpaAddressEntity address ) {
     this.address = address;
   }
+
 }

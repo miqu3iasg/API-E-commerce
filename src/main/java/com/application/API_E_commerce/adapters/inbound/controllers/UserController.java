@@ -27,41 +27,45 @@ public class UserController {
   }
 
   @PostMapping
-  ResponseEntity<ApiResponse<UserResponseDTO>> createUser ( @RequestBody CreateUserRequestDTO request ) {
+  public ResponseEntity<ApiResponse<UserResponseDTO>> createUser ( @RequestBody CreateUserRequestDTO request ) {
     User createdUser = userService.createUser(request);
     return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("User created successfully", new UserResponseDTO(createdUser), HttpStatus.CREATED));
   }
 
   @PutMapping("/{userId}/name")
-  ResponseEntity<ApiResponse<UserResponseDTO>> updateUserName ( @PathVariable UUID userId, @RequestBody UpdateUserNameRequestDTO request ) {
+  public ResponseEntity<ApiResponse<UserResponseDTO>> updateUserName ( @PathVariable UUID userId, @RequestBody UpdateUserNameRequestDTO request ) {
     User updatedUser = userService.updateUserName(userId, request.name());
     return ResponseEntity.ok(ApiResponse.success("User name updated successfully", new UserResponseDTO(updatedUser), HttpStatus.OK));
   }
 
   @PutMapping("/{userId}/password")
-  ResponseEntity<Void> updateUserPassword ( @PathVariable UUID userId, @RequestBody UpdateUserPasswordRequestDTO request ) {
+  public ResponseEntity<Void> updateUserPassword ( @PathVariable UUID userId, @RequestBody UpdateUserPasswordRequestDTO request ) {
     userService.updatedUserPassword(userId, request.password());
     return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{userId}/address")
-  ResponseEntity<ApiResponse<Address>> updateUserAddress ( @PathVariable UUID userId, @RequestBody UpdateAddressRequestDTO request ) {
-    Address updatedUserAddress = userService.updateUserAddress(userId, request);
-    return ResponseEntity.ok(ApiResponse.success("User address updated successfully", updatedUserAddress, HttpStatus.OK));
+  public ResponseEntity<ApiResponse<Address>> updateUserAddress ( @PathVariable UUID userId, @RequestBody UpdateAddressRequestDTO request ) {
+    Address updatedAddress = userService.updateUserAddress(userId, request);
+
+    return ResponseEntity.ok(ApiResponse.success("User address updated successfully", updatedAddress, HttpStatus.OK));
   }
 
   @GetMapping
-  ResponseEntity<ApiResponse<List<UserResponseDTO>>> findAllUsers () {
-    List<UserResponseDTO> userResponseDTOs = userService.findAllUsers().stream()
+  public ResponseEntity<ApiResponse<List<UserResponseDTO>>> findAllUsers () {
+    List<UserResponseDTO> users = userService.findAllUsers()
+            .stream()
             .map(UserResponseDTO::new)
             .toList();
-    return ResponseEntity.ok(ApiResponse.success("Users found successfully", userResponseDTOs, HttpStatus.OK));
+
+    return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users, HttpStatus.OK));
   }
 
   @DeleteMapping("/{userId}")
-  ResponseEntity<Void> deleteUser ( @PathVariable UUID userId ) {
+  public ResponseEntity<Void> deleteUser ( @PathVariable UUID userId ) {
     userService.deleteUser(userId);
+
     return ResponseEntity.noContent().build();
   }
 

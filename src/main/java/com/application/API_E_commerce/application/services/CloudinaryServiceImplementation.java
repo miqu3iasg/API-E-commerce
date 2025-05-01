@@ -1,5 +1,6 @@
 package com.application.API_E_commerce.application.services;
 
+import com.application.API_E_commerce.infrastructure.exceptions.NullParametersException;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.cloudinary.utils.StringUtils;
@@ -11,72 +12,71 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+// Implementar um gateway para o cloudinary
 @Slf4j
 @Service
 public class CloudinaryServiceImplementation {
-  private final Cloudinary cloudinary;
 
-  public CloudinaryServiceImplementation() {
-    Dotenv dotenv = Dotenv.configure().load();
+	private final Cloudinary cloudinary;
 
-    String cloudinaryUrl = dotenv.get("CLOUDINARY_URL");
+	public CloudinaryServiceImplementation () {
+		Dotenv dotenv = Dotenv.configure().load();
 
-    if (cloudinaryUrl == null || cloudinaryUrl.isEmpty()) {
-      throw new IllegalArgumentException("CLOUDINARY_URL is not set in the environment variables.");
-    }
+		String cloudinaryUrl = dotenv.get("CLOUDINARY_URL");
 
-    this.cloudinary = new Cloudinary(cloudinaryUrl);
-  }
+		if (cloudinaryUrl == null || cloudinaryUrl.isEmpty())
+			throw new IllegalArgumentException("CLOUDINARY_URL is not set in the environment variables.");
 
-  public String uploadToImageCloudinary(String imageUrl, UUID productId) throws IOException {
-    this.validateInputs(imageUrl, productId);
+		cloudinary = new Cloudinary(cloudinaryUrl);
+	}
 
-    String publicId = "product_" + productId;
+	public String uploadToImageCloudinary (String imageUrl, UUID productId) throws IOException {
+		validateInputs(imageUrl, productId);
 
-    try {
-      Map<String, Object> params = ObjectUtils.asMap(
-              "public_id", publicId,
-              "overwrite", true
-      );
+		String publicId = "product_" + productId;
 
-      this.cloudinary.uploader().upload(imageUrl, params);
+		try {
+			Map<String, Object> params = ObjectUtils.asMap(
+					"public_id", publicId,
+					"overwrite", true
+			);
 
-      log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
+			cloudinary.uploader().upload(imageUrl, params);
 
-    } catch (IOException exception) {
-      log.error("Error in upload image for Cloudinary: ", exception);
-      throw exception;
-    }
-    return imageUrl;
-  }
+			log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
 
-  private void validateInputs(String imageUrl, UUID productId) {
-    if (imageUrl == null || imageUrl.trim().isEmpty() || productId == null) {
-      throw new IllegalArgumentException("Image URL and Product ID must not be null or empty");
-    }
-  }
+		} catch (IOException exception) {
+			log.error("Error in upload image for Cloudinary: ", exception);
+			throw exception;
+		}
+		return imageUrl;
+	}
 
-  public void deleteImageFromCloudinary(UUID productId) throws IOException {
-    String publicId = "product_" + productId;
+	private void validateInputs (String imageUrl, UUID productId) {
+		if (imageUrl == null || imageUrl.trim().isEmpty() || productId == null)
+			throw new NullParametersException("Image URL and Product ID must not be null or empty");
+	}
 
-    if (StringUtils.isEmpty(publicId)) {
-      throw new IllegalArgumentException("Could not extract Public ID from image URL.");
-    }
+	public void deleteImageFromCloudinary (UUID productId) throws IOException {
+		String publicId = "product_" + productId;
 
-    try {
-      Map<String, Object> params = ObjectUtils.asMap("invalidate", true);
+		if (StringUtils.isEmpty(publicId))
+			throw new IllegalArgumentException("Could not extract Public ID from image URL.");
 
-      var result = cloudinary.uploader().destroy(publicId, params);
+		try {
+			Map<String, Object> params = ObjectUtils.asMap("invalidate", true);
 
-      if (!"ok".equals(result.get("result"))) {
-        throw new IOException("Failed to delete image from Cloudinary: " + result);
-      }
+			var result = cloudinary.uploader().destroy(publicId, params);
 
-      log.info("Image successfully deleted from Cloudinary: {}", publicId);
+			if (! "ok".equals(result.get("result")))
+				throw new IOException("Failed to delete image from Cloudinary: " + result);
 
-    } catch (IOException exception) {
-      log.error("Error deleting image from Cloudinary: ", exception);
-      throw exception;
-    }
-  }
+			log.info("Image successfully deleted from Cloudinary: {}", publicId);
+
+		} catch (IOException exception) {
+			log.error("Error deleting image from Cloudinary: ", exception);
+			throw exception;
+		}
+	}
+
 }

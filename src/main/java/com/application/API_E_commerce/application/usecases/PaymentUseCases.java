@@ -5,5 +5,9 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 
 public interface PaymentUseCases {
-  PaymentIntent processPayment( Payment payment) throws StripeException;
+
+  PaymentIntent processPayment ( Payment payment ) throws StripeException;
+
+  String createCheckoutSession ( Payment payment ) throws StripeException;
+
 }

@@ -10,6 +10,8 @@ import java.util.UUID;
 
 public interface CartUseCases {
 
+  Cart createCart ( UUID userId );
+
   Cart addProductToCart ( UUID userId, UUID productId, int quantity );
 
   void removeProductFromCart ( UUID userId, UUID productId, UUID cartId );

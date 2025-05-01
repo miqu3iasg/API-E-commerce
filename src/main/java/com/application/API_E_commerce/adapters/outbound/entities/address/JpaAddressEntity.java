@@ -2,7 +2,6 @@ package com.application.API_E_commerce.adapters.outbound.entities.address;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
@@ -12,8 +11,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaAddressEntity {
+
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
   private String street;
@@ -26,51 +26,52 @@ public class JpaAddressEntity {
 
   private String country;
 
-  public UUID getId() {
+  public UUID getId () {
     return id;
   }
 
-  public void setId(UUID id) {
+  public void setId ( UUID id ) {
     this.id = id;
   }
 
-  public String getStreet() {
+  public String getStreet () {
     return street;
   }
 
-  public void setStreet(String street) {
+  public void setStreet ( String street ) {
     this.street = street;
   }
 
-  public String getCity() {
+  public String getCity () {
     return city;
   }
 
-  public void setCity(String city) {
+  public void setCity ( String city ) {
     this.city = city;
   }
 
-  public String getState() {
+  public String getState () {
     return state;
   }
 
-  public void setState(String state) {
+  public void setState ( String state ) {
     this.state = state;
   }
 
-  public String getZipCode() {
+  public String getZipCode () {
     return zipCode;
   }
 
-  public void setZipCode(String zipCode) {
+  public void setZipCode ( String zipCode ) {
     this.zipCode = zipCode;
   }
 
-  public String getCountry() {
+  public String getCountry () {
     return country;
   }
 
-  public void setCountry(String country) {
+  public void setCountry ( String country ) {
     this.country = country;
   }
+
 }
