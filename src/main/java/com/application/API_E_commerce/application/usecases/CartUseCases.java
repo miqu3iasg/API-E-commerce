@@ -10,16 +10,16 @@ import java.util.UUID;
 
 public interface CartUseCases {
 
-  Cart createCart ( UUID userId );
+	Cart createCart (UUID userId);
 
-  Cart addProductToCart ( UUID userId, UUID productId, int quantity );
+	Cart addProductToCart (UUID userId, UUID productId, int quantity);
 
-  void removeProductFromCart ( UUID userId, UUID productId, UUID cartId );
+	Cart removeProductFromCart (UUID userId, UUID productId, UUID cartId);
 
-  void clearCart ( UUID userId, UUID cartId );
+	void clearCart (UUID userId, UUID cartId);
 
-  void checkoutCart ( UUID userId, UUID cartId, PaymentMethod paymentMethod ) throws StripeException;
+	void checkoutCart (UUID userId, UUID cartId, PaymentMethod paymentMethod) throws StripeException;
 
-  List<CartItem> getItemsInCart ( UUID userId, UUID cartId );
+	List<CartItem> getItemsInCart (UUID userId, UUID cartId);
 
 }

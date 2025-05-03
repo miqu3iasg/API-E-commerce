@@ -178,7 +178,7 @@ public class CartServiceImplementation implements CartUseCases {
 	}
 
 	@Override
-	public void removeProductFromCart (UUID userId, UUID productId, UUID cartId) {
+	public Cart removeProductFromCart (UUID userId, UUID productId, UUID cartId) {
 		validateInput(userId, productId);
 
 		User user = validateIfUserExistsAndReturn(userId);
@@ -207,7 +207,7 @@ public class CartServiceImplementation implements CartUseCases {
 
 		productRepository.saveProduct(product);
 
-		cartRepository.saveCart(cart);
+		return cartRepository.saveCart(cart);
 	}
 
 	private Cart validateUserActiveCart (User user, UUID cartId) {
@@ -307,8 +307,7 @@ public class CartServiceImplementation implements CartUseCases {
 			userRepository.saveUser(cart.getUser());
 		} catch (Exception e) {
 			throw new OrderProcessingException("An error occurred while processing " +
-					"the " +
-					"order: " + e.getMessage(), e);
+					"the " + "order: " + e.getMessage(), e);
 		}
 	}
 

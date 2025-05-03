@@ -1,5 +1,6 @@
 package com.application.API_E_commerce.infrastructure.exceptions;
 
+import com.application.API_E_commerce.infrastructure.exceptions.address.AddressNotFoundException;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.EmptyCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.InvalidCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.UserCartNotFoundException;
@@ -18,13 +19,14 @@ import com.application.API_E_commerce.infrastructure.exceptions.user.InvalidUser
 import com.application.API_E_commerce.infrastructure.exceptions.user.UserNotFoundException;
 import com.application.API_E_commerce.response.ApiError;
 import com.application.API_E_commerce.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
-import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -35,7 +37,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 			ProductImageNotFoundException.class,
 			OrderNotFoundException.class,
 			UserCartNotFoundException.class,
-			CategoryNotFoundException.class
+			CategoryNotFoundException.class,
+			AddressNotFoundException.class
 	})
 	public ResponseEntity<ApiResponse<ApiError>> handleNotFoundExceptions (
 			RuntimeException ex,
@@ -76,7 +79,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	) {
 		return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
 	}
-	
+
 	@ExceptionHandler({
 			OrderProcessingException.class,
 			CreatingCheckoutSessionException.class,
@@ -90,11 +93,17 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiResponse<ApiError>> handleAllUncaughtExceptions (
-			Exception ex,
-			HttpServletRequest request
-	) {
-		return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public ResponseEntity<ApiResponse<ApiError>> handleAllUncaughtExceptions (Exception ex, WebRequest request) {
+		ApiError error = new ApiError(
+				request.getContextPath(),
+				ex.getMessage()
+		);
+
+		var response = ApiResponse.error(ex.getMessage(),
+				HttpStatus.INTERNAL_SERVER_ERROR, error);
+
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
 
 }

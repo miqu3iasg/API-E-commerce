@@ -1,4 +1,9 @@
 package com.application.API_E_commerce.domain.address;
 
-public record UpdateAddressRequestDTO( String string ) {
-}
+public record UpdateAddressRequestDTO(
+		String street,
+		String city,
+		String state,
+		String zipCode,
+		String country
+) { }

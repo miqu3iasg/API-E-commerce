@@ -41,14 +41,8 @@ public class UserServiceImplementation implements UserUseCases {
 		user.setRole(createUserRequest.role());
 		user.setCreatedAt(LocalDateTime.now());
 
-		// Chamar o address service sem deixar a entidade detach
-		Address address = new Address();
-		address.setCity(createUserRequest.address().city());
-		address.setStreet(createUserRequest.address().street());
-		address.setCity(createUserRequest.address().city());
-		address.setState(createUserRequest.address().state());
-		address.setZipCode(createUserRequest.address().zipCode());
-		address.setCountry(createUserRequest.address().country());
+		Address address = buildAddress(createUserRequest);
+
 		user.setAddress(address);
 
 		return userRepository.saveUser(user);
@@ -69,6 +63,17 @@ public class UserServiceImplementation implements UserUseCases {
 		} catch (IllegalArgumentException e) {
 			throw new InvalidUserRoleException();
 		}
+	}
+
+	private static Address buildAddress (CreateUserRequestDTO createUserRequest) {
+		Address address = new Address();
+		address.setCity(createUserRequest.address().city());
+		address.setStreet(createUserRequest.address().street());
+		address.setCity(createUserRequest.address().city());
+		address.setState(createUserRequest.address().state());
+		address.setZipCode(createUserRequest.address().zipCode());
+		address.setCountry(createUserRequest.address().country());
+		return address;
 	}
 
 	@Override
