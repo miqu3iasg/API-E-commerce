@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +69,7 @@ public class ProductController {
 	@PostMapping
 	public ResponseEntity<ApiResponse<ProductResponseDTO>> createProduct (
 			@Parameter(description = "Product data to create", required = true)
-			@RequestBody CreateProductRequestDTO request) {
+			@Valid @RequestBody CreateProductRequestDTO request) {
 		Product product = productService.createProduct(request);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(ApiResponse.success("Product created successfully", toResponse(product), HttpStatus.CREATED));
@@ -129,7 +130,7 @@ public class ProductController {
 			@Parameter(description = "Product ID to update", required = true)
 			@PathVariable UUID productId,
 			@Parameter(description = "Product data to update", required = true)
-			@RequestBody UpdateProductRequestDTO request) {
+			@Valid @RequestBody UpdateProductRequestDTO request) {
 		Product product = productService.updateProduct(productId, request);
 		return ResponseEntity.ok(ApiResponse.success("Product updated successfully", toResponse(product), HttpStatus.OK));
 	}

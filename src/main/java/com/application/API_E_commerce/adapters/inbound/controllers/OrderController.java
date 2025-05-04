@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +69,7 @@ public class OrderController {
 	@PostMapping("/checkout")
 	public ResponseEntity<ApiResponse<OrderResponseDTO>> createOrderCheckout (
 			@Parameter(description = "Order data to create with checkout", required = true)
-			@RequestBody CreateOrderCheckoutDTO orderData) throws StripeException {
+			@Valid @RequestBody CreateOrderCheckoutDTO orderData) throws StripeException {
 		Order order = orderService.createOrderCheckout(orderData);
 		OrderResponseDTO response = getOrderResponse(order);
 		return ResponseEntity.status(HttpStatus.CREATED)

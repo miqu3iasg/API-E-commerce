@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -138,7 +139,7 @@ public class CartController {
 			@Parameter(description = "Product ID to add to the cart", required = true)
 			@PathVariable UUID productId,
 			@Parameter(description = "Product quantity data to add", required = true)
-			@RequestBody AddProductToCartRequestDTO productData) {
+			@Valid @RequestBody AddProductToCartRequestDTO productData) {
 		Cart cart = cartService.addProductToCart(userId, productId, productData.quantity());
 		return ResponseEntity.ok(ApiResponse.success("Product added to cart successfully", toResponse(cart), HttpStatus.OK));
 	}
@@ -267,7 +268,10 @@ public class CartController {
 			@PathVariable UUID userId,
 			@Parameter(description = "Cart ID to checkout", required = true)
 			@PathVariable UUID cartId,
-			@Parameter(description = "Payment method for checkout", required = true)
+			@Parameter(
+					description = "Payment method for checkout. Can be 'CARD' or 'BOLETO'",
+					required = true
+			)
 			@RequestBody PaymentMethod paymentMethod) throws StripeException {
 		cartService.checkoutCart(userId, cartId, paymentMethod);
 		return ResponseEntity.status(HttpStatus.CREATED)

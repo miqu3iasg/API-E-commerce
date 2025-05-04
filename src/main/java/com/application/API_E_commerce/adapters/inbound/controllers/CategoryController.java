@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +65,7 @@ public class CategoryController {
 	@PostMapping
 	public ResponseEntity<ApiResponse<CategoryResponseDTO>> createCategory (
 			@Parameter(description = "Category data to create", required = true)
-			@RequestBody CreateCategoryRequestDTO categoryData) {
+			@Valid @RequestBody CreateCategoryRequestDTO categoryData) {
 		Category category = categoryService.createCategory(categoryData);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(ApiResponse.success("Category created successfully", getCategoryResponse(category), HttpStatus.CREATED));

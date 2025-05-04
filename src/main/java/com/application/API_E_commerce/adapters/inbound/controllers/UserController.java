@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +68,7 @@ public class UserController {
 	@PostMapping
 	public ResponseEntity<ApiResponse<UserResponseDTO>> createUser (
 			@Parameter(description = "User data request to create", required = true)
-			@RequestBody CreateUserRequestDTO request
+			@Valid @RequestBody CreateUserRequestDTO request
 	) {
 		User createdUser = userService.createUser(request);
 		return ResponseEntity.status(HttpStatus.CREATED)
@@ -118,7 +119,7 @@ public class UserController {
 			@Parameter(description = "User ID to update", required = true)
 			@PathVariable UUID userId,
 			@Parameter(description = "User name request to update", required = true)
-			@RequestBody UpdateUserNameRequestDTO request
+			@Valid @RequestBody UpdateUserNameRequestDTO request
 	) {
 		User updatedUser = userService.updateUserName(userId, request.name());
 		return ResponseEntity.ok(ApiResponse.success("User name updated successfully", new UserResponseDTO(updatedUser), HttpStatus.OK));
@@ -165,7 +166,7 @@ public class UserController {
 			@Parameter(description = "User ID to update", required = true)
 			@PathVariable UUID userId,
 			@Parameter(description = "User password request to update", required = true)
-			@RequestBody UpdateUserPasswordRequestDTO request
+			@Valid @RequestBody UpdateUserPasswordRequestDTO request
 	) {
 		userService.updatedUserPassword(userId, request.password());
 		return ResponseEntity.noContent().build();
@@ -215,7 +216,7 @@ public class UserController {
 			@Parameter(description = "User ID to update", required = true)
 			@PathVariable UUID userId,
 			@Parameter(description = "User address request to update", required = true)
-			@RequestBody UpdateAddressRequestDTO request
+			@Valid @RequestBody UpdateAddressRequestDTO request
 	) {
 		Address updatedAddress = userService.updateUserAddress(userId, request);
 
