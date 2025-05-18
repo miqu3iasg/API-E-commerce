@@ -46,7 +46,6 @@ public class StripePaymentGateway implements PaymentGateway {
 		}
 	}
 
-	//  Adicionar exceções personalizadas
 	private static void validatePaymentRequest (Payment paymentRequest) {
 		if (paymentRequest == null)
 			throw new MissingPaymentRequestException("Payment request cannot be " +

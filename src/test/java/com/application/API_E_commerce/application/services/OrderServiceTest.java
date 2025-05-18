@@ -2,6 +2,7 @@ package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.PaymentUseCases;
 import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.application.usecases.StockUseCases;
 import com.application.API_E_commerce.application.usecases.UserUseCases;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.order.Order;
@@ -57,6 +58,9 @@ class OrderServiceTest {
 	@Mock
 	PaymentRepository paymentRepository;
 
+	@Mock
+	StockUseCases stockService;
+
 	private User mockUserFactory () {
 		User user = new User();
 		user.setId(UUID.randomUUID());
@@ -73,6 +77,16 @@ class OrderServiceTest {
 		user.getAddress().setCountry("country");
 		return user;
 	}
+
+	private Order mockOrder () {
+		Order order = new Order();
+		order.setId(UUID.randomUUID());
+		order.setStatus(OrderStatus.PENDING);
+		order.setTotalValue(BigDecimal.valueOf(10000.0));
+		order.setOrderDate(LocalDateTime.now());
+		return order;
+	}
+
 
 	private Product mockProductFactory () {
 		Product product = new Product();
@@ -93,7 +107,6 @@ class OrderServiceTest {
 		@Test
 		void shouldCreateCheckoutWithValidRequestSuccessfully () throws StripeException {
 			User user = mockUserFactory();
-
 			Product product = mockProductFactory();
 			when(productService.findProductById(product.getId())).thenReturn(Optional.of(product));
 
@@ -124,12 +137,58 @@ class OrderServiceTest {
 			Order order = orderService.createOrderCheckout(request);
 
 			assertNotNull(order, "The order cannot be null!");
-			assertEquals(order.getUser(), user);
-			assertEquals(order.getItems(), items);
-			assertEquals(order.getPayment(), payment);
+			assertEquals(user, order.getUser());
+			assertEquals(items, order.getItems());
+			assertEquals(payment, order.getPayment());
 			assertEquals(OrderStatus.PENDING, order.getStatus());
 			assertEquals(0, order.getTotalValue().compareTo(
 					BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice())));
+
+			verify(stockService).decreaseProductStock(product.getId(),
+					orderItem.getQuantity());
+		}
+
+		@Test
+		void shouldCreateCheckoutEvenIfStockUpdateFails () throws StripeException {
+			User user = mockUserFactory();
+			Product product = mockProductFactory();
+			when(productService.findProductById(product.getId())).thenReturn(Optional.of(product));
+
+			OrderItem orderItem = new OrderItem();
+			orderItem.setProduct(product);
+			orderItem.setQuantity(5);
+			orderItem.setUnitPrice(product.getPrice());
+
+			List<OrderItem> items = List.of(orderItem);
+
+			Payment payment = new Payment();
+			payment.setPaymentMethod(PaymentMethod.CARD);
+			payment.setStatus(PaymentStatus.PENDING);
+			payment.setPaymentDate(LocalDateTime.now());
+
+			CreateOrderCheckoutDTO request = new CreateOrderCheckoutDTO(user, items, PaymentMethod.CARD);
+
+			Order mockOrder = new Order();
+			mockOrder.setId(UUID.randomUUID());
+			mockOrder.setUser(user);
+			mockOrder.setItems(items);
+			mockOrder.setPayment(payment);
+			mockOrder.setStatus(OrderStatus.PENDING);
+			mockOrder.setTotalValue(BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice()));
+
+			when(orderRepository.saveOrder(any(Order.class))).thenReturn(mockOrder);
+			doThrow(new IllegalArgumentException("Invalid quantity")).when(stockService)
+					.decreaseProductStock(product.getId(), orderItem.getQuantity());
+
+			Order order = orderService.createOrderCheckout(request);
+
+			assertNotNull(order, "The order cannot be null!");
+			assertEquals(user, order.getUser());
+			assertEquals(items, order.getItems());
+			assertEquals(payment, order.getPayment());
+			assertEquals(OrderStatus.PENDING, order.getStatus());
+			verify(stockService).decreaseProductStock(product.getId(),
+					orderItem.getQuantity());
 		}
 
 		@Test
@@ -138,6 +197,7 @@ class OrderServiceTest {
 
 			assertThrows(EmptyOrderException.class,
 					() -> orderService.createOrderCheckout(request));
+			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
 
 	}
@@ -148,57 +208,44 @@ class OrderServiceTest {
 		@Test
 		void shouldFetchAllOrderHistorySuccessfully () {
 			List<Order> expectedOrders = List.of(mockOrder(), mockOrder());
-
 			when(orderRepository.findAllOrders()).thenReturn(expectedOrders);
 
 			List<Order> orders = orderService.fetchAllOrderHistory();
 
 			assertEquals(expectedOrders, orders);
+			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
 
-		private Order mockOrder () {
-			Order order = new Order();
-			order.setId(UUID.randomUUID());
-			order.setStatus(OrderStatus.PENDING);
-			order.setTotalValue(BigDecimal.valueOf(10000.0));
-			order.setOrderDate(LocalDateTime.now());
-			return order;
+	}
+
+	@Nested
+	class CancelOrder {
+
+		@Test
+		void shouldCancelOrderWhenOrderExists () {
+			Order mockOrder = mockOrder();
+			UUID orderId = mockOrder.getId();
+			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
+
+			orderService.cancelOrder(orderId);
+
+			verify(orderRepository).deleteOrder(orderId);
+			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+			Optional<Order> deletedOrder = orderRepository.findOrderById(orderId);
+			assertTrue(deletedOrder.isEmpty(), "The order still exists after cancellation!");
+			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
 
-		@Nested
-		class CancelOrder {
+		@Test
+		void shouldThrowExceptionWhenOrderDoesNotExist () {
+			UUID orderId = UUID.randomUUID();
+			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
 
-			@Test
-			void shouldCancelOrderWhenOrderExists () {
-				Order mockOrder = mockOrder();
-				UUID orderId = mockOrder.getId();
-				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
-
-				orderService.cancelOrder(orderId);
-
-				verify(orderRepository).deleteOrder(orderId);
-
-				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
-
-				Optional<Order> deletedOrder = orderRepository.findOrderById(orderId);
-				assertTrue(deletedOrder.isEmpty(), "The order still exists after cancellation!");
-			}
-
-			@Test
-			void shouldThrowExceptionWhenOrderDoesNotExist () {
-				UUID orderId = UUID.randomUUID();
-				when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
-
-				OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
-						() -> {
-							orderService.cancelOrder(orderId);
-						});
-
-				assertEquals("Order cannot be null.", exception.getMessage());
-
-				verify(orderRepository, never()).deleteOrder(any());
-			}
-
+			OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
+					() -> orderService.cancelOrder(orderId));
+			assertEquals("Order cannot be null.", exception.getMessage());
+			verify(orderRepository, never()).deleteOrder(any());
+			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
 
 	}

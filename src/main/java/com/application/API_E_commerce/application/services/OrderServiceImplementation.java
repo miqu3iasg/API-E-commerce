@@ -1,9 +1,6 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.OrderUseCases;
-import com.application.API_E_commerce.application.usecases.PaymentUseCases;
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
-import com.application.API_E_commerce.application.usecases.UserUseCases;
+import com.application.API_E_commerce.application.usecases.*;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderRepository;
 import com.application.API_E_commerce.domain.order.OrderStatus;
@@ -22,6 +19,8 @@ import com.application.API_E_commerce.infrastructure.exceptions.product.ProductN
 import com.application.API_E_commerce.infrastructure.exceptions.user.UserNotFoundException;
 import com.stripe.exception.StripeException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,22 +33,29 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImplementation implements OrderUseCases {
 
+	private static final Logger logger = LoggerFactory.getLogger(OrderServiceImplementation.class);
+
 	private final OrderRepository orderRepository;
 	private final UserUseCases userService;
 	private final ProductUseCases productService;
 	private final PaymentUseCases paymentService;
 	private final PaymentRepository paymentRepository;
+	private final StockUseCases stockService;
 
 	public OrderServiceImplementation (
 			OrderRepository orderRepository,
-			UserUseCases userService, ProductUseCases productService,
-			PaymentUseCases paymentService, PaymentRepository paymentRepository
+			UserUseCases userService,
+			ProductUseCases productService,
+			PaymentUseCases paymentService,
+			PaymentRepository paymentRepository,
+			StockUseCases stockService
 	) {
 		this.orderRepository = orderRepository;
 		this.userService = userService;
 		this.productService = productService;
 		this.paymentService = paymentService;
 		this.paymentRepository = paymentRepository;
+		this.stockService = stockService;
 	}
 
 	@Override
@@ -81,9 +87,14 @@ public class OrderServiceImplementation implements OrderUseCases {
 		processPayment(createOrderCheckoutRequest.paymentMethod(), order, amountInCents);
 
 		orderItems.forEach(item -> {
-			Product product = item.getProduct();
-			productService.decreaseProductStock(product.getId(), item.getQuantity());
-			product.setStock(item.getProduct().getStock() - item.getQuantity());
+			try {
+				Product product = item.getProduct();
+				stockService.decreaseProductStock(product.getId(), item.getQuantity());
+				product.setStock(item.getProduct().getStock() - item.getQuantity());
+			} catch (Exception e) {
+				logger.error("Failed to request stock decrease for productId={}, quantity={}: {}",
+						item.getProduct().getId(), item.getQuantity(), e.getMessage());
+			}
 		});
 
 		order.setStatus(OrderStatus.PAYMENT);

@@ -10,11 +10,12 @@ import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDT
 import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.repository.ProductRepository;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,215 +26,204 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
 class ProductServiceIntegrationTest {
 
-  @Autowired
-  ProductRepository productRepository;
+	private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
 
-  @Autowired
-  CategoryRepository categoryRepository;
+	@Autowired
+	ProductRepository productRepository;
 
-  @Autowired
-  ProductUseCases productService;
+	@Autowired
+	CategoryRepository categoryRepository;
 
-  @Autowired
-  CategoryUseCases categoryService;
+	@Autowired
+	ProductUseCases productService;
 
-  @Nested
-  class CreateProduct {
+	@Autowired
+	CategoryUseCases categoryService;
 
-    @Test
-    @DisplayName("Should create a product successfully with valid inputs")
-    void shouldCreateProductSuccessfully () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+	@Autowired
+	StockServiceImplementation stockService;
 
-      Product product = productService.createProduct(createProductRequest);
+	private CreateProductRequestDTO createProductRequestFactory () {
+		return new CreateProductRequestDTO(
+				"Test Name",
+				"Test description",
+				BigDecimal.valueOf(20.0),
+				10
+		);
+	}
 
-      assertNotNull(product, "The product should not be null");
-      assertNotNull(product.getId(), "The product ID should not be null");
+	private CreateCategoryRequestDTO createCategoryRequestFactory () {
+		return new CreateCategoryRequestDTO("Category name", "Category description");
+	}
 
-      assertEquals("Test Name", product.getName(), "The product name is incorrect");
-      assertEquals("Test description", product.getDescription(), "The product description is incorrect");
-      assertEquals(BigDecimal.valueOf(20.0), product.getPrice(), "The product price is incorrect");
-      assertEquals(10, product.getStock(), "The product stock is incorrect");
+	@Nested
+	class CreateProduct {
 
-      Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(savedProduct, "The product should be saved in the database");
-      assertEquals(product.getId(), savedProduct.getId(), "The product ID should match");
-      assertEquals(product.getName(), savedProduct.getName(), "The product name should match");
-      assertEquals(product.getDescription(), savedProduct.getDescription(), "The product description should match");
-      assertEquals(0, product.getPrice().compareTo(BigDecimal.valueOf(20.0)), "The product price should match");
-      assertEquals(product.getStock(), savedProduct.getStock(), "The product stock should match");
-    }
+		@Test
+		@DisplayName("Should create a product successfully with valid inputs")
+		void shouldCreateProductSuccessfully () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
 
-  }
+			Product product = productService.createProduct(createProductRequest);
 
-  @Nested
-  class ListProduct {
+			assertNotNull(product, "The product should not be null");
+			assertNotNull(product.getId(), "The product ID should not be null");
 
-    @Test
-    @DisplayName("Should return a list of product images when the product exists")
-    void shouldReturnListOfProductImagesWhenProductExists () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+			assertEquals("Test Name", product.getName(), "The product name is incorrect");
+			assertEquals("Test description", product.getDescription(), "The product description is incorrect");
+			assertEquals(BigDecimal.valueOf(20.0), product.getPrice(), "The product price is incorrect");
+			assertEquals(10, product.getStock(), "The product stock is incorrect");
 
-      product.setImagesUrl(List.of("image1.jpg", "image2.jpg"));
+			Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			assertNotNull(savedProduct, "The product should be saved in the database");
+			assertEquals(product.getId(), savedProduct.getId(), "The product ID should match");
+			assertEquals(product.getName(), savedProduct.getName(), "The product name should match");
+			assertEquals(product.getDescription(), savedProduct.getDescription(), "The product description should match");
+			assertEquals(0, product.getPrice().compareTo(BigDecimal.valueOf(20.0)), "The product price should match");
+			assertEquals(product.getStock(), savedProduct.getStock(), "The product stock should match");
+		}
 
-      productRepository.saveProduct(product);
+	}
 
-      List<String> images = productService.getProductImages(product.getId());
+	@Nested
+	class ListProduct {
 
-      assertNotNull(images, "The list of images should not be null");
-      assertTrue(images.contains("image1.jpg"), "The product should contain image1.jpg");
-      assertTrue(images.contains("image2.jpg"), "The product should contain image2.jpg");
-    }
+		@Test
+		@DisplayName("Should return a list of product images when the product exists")
+		void shouldReturnListOfProductImagesWhenProductExists () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+			Product product = productService.createProduct(createProductRequest);
 
-  }
+			product.setImagesUrl(List.of("image1.jpg", "image2.jpg"));
 
-  @Nested
-  class UpdateProduct {
+			productRepository.saveProduct(product);
 
-    @Test
-    @DisplayName("Should update the product details when the product exists")
-    void shouldUpdateProductDetailsWhenProductExists () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+			List<String> images = productService.getProductImages(product.getId());
 
-      String updatedName = "Updated Name";
-      String updatedDescription = "Updated Description";
-      BigDecimal updatedPrice = BigDecimal.valueOf(50.0);
+			assertNotNull(images, "The list of images should not be null");
+			assertTrue(images.contains("image1.jpg"), "The product should contain image1.jpg");
+			assertTrue(images.contains("image2.jpg"), "The product should contain image2.jpg");
+		}
 
-      UpdateProductRequestDTO updateProductRequest = new UpdateProductRequestDTO(
-              Optional.of(updatedName),
-              Optional.of(updatedDescription),
-              Optional.of(updatedPrice),
-              Optional.empty(),
-              Optional.empty(),
-              Optional.empty()
-      );
+	}
 
-      productService.updateProduct(product.getId(), updateProductRequest);
+	@Nested
+	class UpdateProduct {
 
-      Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(updatedProduct, "The updated product should not be null");
-      assertEquals("Updated Name", updatedProduct.getName(), "The product name should be updated");
-      assertEquals("Updated Description", updatedProduct.getDescription(), "The product description should be updated");
-      assertEquals(0, updatedProduct.getPrice().compareTo(BigDecimal.valueOf(50.0)), "The product price should be updated");
-    }
+		@Test
+		@DisplayName("Should update the product details when the product exists")
+		void shouldUpdateProductDetailsWhenProductExists () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+			Product product = productService.createProduct(createProductRequest);
 
-    @Test
-    @DisplayName("Should update the product stock after a sale when the product exists")
-    void shouldUpdateProductStockAfterSaleWhenProductExists () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+			final String updatedName = "Updated Name";
+			final String updatedDescription = "Updated Description";
+			BigDecimal updatedPrice = BigDecimal.valueOf(50.0);
 
-      int quantitySold = 3;
+			UpdateProductRequestDTO updateProductRequest = new UpdateProductRequestDTO(
+					Optional.of(updatedName),
+					Optional.of(updatedDescription),
+					Optional.of(updatedPrice),
+					Optional.empty(),
+					Optional.empty(),
+					Optional.empty()
+			);
 
-      productService.decreaseProductStock(product.getId(), quantitySold);
+			productService.updateProduct(product.getId(), updateProductRequest);
 
-      Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(updatedProduct, "The updated product should not be null");
-      assertEquals(7, updatedProduct.getStock(), "The product stock should be updated correctly");
-    }
+			Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			assertNotNull(updatedProduct, "The updated product should not be null");
+			assertEquals("Updated Name", updatedProduct.getName(), "The product name should be updated");
+			assertEquals("Updated Description", updatedProduct.getDescription(), "The product description should be updated");
+			assertEquals(0, updatedProduct.getPrice().compareTo(BigDecimal.valueOf(50.0)), "The product price should be updated");
+		}
 
-  }
+	}
 
-  @Nested
-  class ProductCategory {
+	@Nested
+	class ProductCategory {
 
-    @Test
-    @Transactional
-    @DisplayName("Should associate a product to a category when both product and category exist")
-    void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+		@Test
+		@Transactional
+		@DisplayName("Should associate a product to a category when both product and category exist")
+		void shouldAssociateProductToCategoryWhenBothProductAndCategoryExist () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+			Product product = productService.createProduct(createProductRequest);
 
-      CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
-      Category category = categoryService.createCategory(createCategoryRequest);
+			CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
+			Category category = categoryService.createCategory(createCategoryRequest);
 
-      log.info("Product {} and category {} created successfully.", product.getId(), category.getId());
+			log.info("Product {} and category {} created successfully.", product.getId(), category.getId());
 
-      Product createdProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(createdProduct, "The created product should not be null");
+			Product createdProduct = productRepository.findProductById(product.getId()).orElse(null);
+			assertNotNull(createdProduct, "The created product should not be null");
 
-      Category createdCategory = categoryRepository.findCategoryById(category.getId()).orElse(null);
-      assertNotNull(createdCategory, "The created category should not be null");
+			Category createdCategory = categoryRepository.findCategoryById(category.getId()).orElse(null);
+			assertNotNull(createdCategory, "The created category should not be null");
 
-      productService.associateProductToCategory(createdProduct.getId(), createdCategory.getId());
+			productService.associateProductToCategory(createdProduct.getId(), createdCategory.getId());
 
-      Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(savedProduct, "The product should be saved in the database");
-      assertEquals(category.getId(), savedProduct.getCategory().getId(), "The product category should match");
-    }
+			Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			assertNotNull(savedProduct, "The product should be saved in the database");
+			assertEquals(category.getId(), savedProduct.getCategory().getId(), "The product category should match");
+		}
 
-    @Test
-    @DisplayName("Should return the product category when the product exists")
-    void shouldReturnProductCategoryWhenProductExists () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+		@Test
+		@DisplayName("Should return the product category when the product exists")
+		void shouldReturnProductCategoryWhenProductExists () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+			Product product = productService.createProduct(createProductRequest);
 
-      CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
-      Category category = categoryService.createCategory(createCategoryRequest);
+			CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
+			Category category = categoryService.createCategory(createCategoryRequest);
 
-      productService.associateProductToCategory(product.getId(), category.getId());
+			productService.associateProductToCategory(product.getId(), category.getId());
 
-      Category retrievedCategory = productService.getProductCategory(product.getId());
+			Category retrievedCategory = productService.getProductCategory(product.getId());
 
-      assertNotNull(retrievedCategory, "The product category should not be null");
-      assertEquals(category.getId(), retrievedCategory.getId(), "The product category ID should match");
-      assertEquals(category.getName(), retrievedCategory.getName(), "The product category name should match");
-    }
+			assertNotNull(retrievedCategory, "The product category should not be null");
+			assertEquals(category.getId(), retrievedCategory.getId(), "The product category ID should match");
+			assertEquals(category.getName(), retrievedCategory.getName(), "The product category name should match");
+		}
 
-    @Test
-    @Transactional
-    @DisplayName("Should remove the product from the category when both product and category exist")
-    void shouldRemoveProductFromCategoryWhenProductAndCategoryExist () {
-      CreateProductRequestDTO createProductRequest = createProductRequestFactory();
-      Product product = productService.createProduct(createProductRequest);
+		@Test
+		@Transactional
+		@DisplayName("Should remove the product from the category when both product and category exist")
+		void shouldRemoveProductFromCategoryWhenProductAndCategoryExist () {
+			CreateProductRequestDTO createProductRequest = createProductRequestFactory();
+			Product product = productService.createProduct(createProductRequest);
 
-      CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
-      Category category = categoryService.createCategory(createCategoryRequest);
+			CreateCategoryRequestDTO createCategoryRequest = createCategoryRequestFactory();
+			Category category = categoryService.createCategory(createCategoryRequest);
 
-      Product productWithCategory = productService.associateProductToCategory(product.getId(), category.getId());
+			Product productWithCategory = productService.associateProductToCategory(product.getId(), category.getId());
 
-      assertNotNull(productWithCategory.getCategory(), "The product should be associated with a category before removal");
-      List<Product> categoryWithProducts = productWithCategory.getCategory().getProducts();
+			assertNotNull(productWithCategory.getCategory(), "The product should be associated with a category before removal");
+			List<Product> categoryWithProducts = productWithCategory.getCategory().getProducts();
 
-      log.info("Products in category: {}", categoryWithProducts.size());
-      log.info("Product being checked: {}", productWithCategory);
+			log.info("Products in category: {}", categoryWithProducts.size());
+			log.info("Product being checked: {}", productWithCategory);
 
-      assertTrue(categoryWithProducts.contains(productWithCategory), "The category should contain the associated product");
+			assertTrue(categoryWithProducts.contains(productWithCategory), "The category should contain the associated product");
 
-      log.info("Product id: {}, product category: {}", productWithCategory.getId(), productWithCategory.getCategory().getId());
-      log.info("Product in category: {}", categoryWithProducts);
+			log.info("Product id: {}, product category: {}", productWithCategory.getId(), productWithCategory.getCategory().getId());
+			log.info("Product in category: {}", categoryWithProducts);
 
-      Product productWithoutCategory = productService.removeProductFromCategory(productWithCategory.getId());
+			Product productWithoutCategory = productService.removeProductFromCategory(productWithCategory.getId());
 
-      assertNull(productWithoutCategory.getCategory(), "The product should have been removed from the category");
+			assertNull(productWithoutCategory.getCategory(), "The product should have been removed from the category");
 
-      Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
-      assertNotNull(updatedProduct, "The updated product should not be null");
-      assertNull(updatedProduct.getCategory(), "The product should no longer have a category");
-    }
+			Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			assertNotNull(updatedProduct, "The updated product should not be null");
+			assertNull(updatedProduct.getCategory(), "The product should no longer have a category");
+		}
 
-  }
-
-  private CreateProductRequestDTO createProductRequestFactory () {
-    return new CreateProductRequestDTO(
-            "Test Name",
-            "Test description",
-            BigDecimal.valueOf(20.0),
-            10
-    );
-  }
-
-  private CreateCategoryRequestDTO createCategoryRequestFactory () {
-    return new CreateCategoryRequestDTO("Category name", "Category description");
-  }
+	}
 
 }
 

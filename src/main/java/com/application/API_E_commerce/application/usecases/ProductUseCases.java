@@ -36,10 +36,6 @@ public interface ProductUseCases {
 
 	void deleteProductImage (UUID productId) throws IOException, ProductImageNotFoundException;
 
-	void increaseProductStock (UUID productId, int quantityToIncrease);
-
-	void decreaseProductStock (UUID productId, int quantityToDecrease);
-
 	int getProductStock (UUID productId);
 
 	List<Product> filterProducts (ProductFiltersCriteria criteria);

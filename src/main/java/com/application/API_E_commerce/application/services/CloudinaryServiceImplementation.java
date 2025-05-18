@@ -6,6 +6,8 @@ import com.cloudinary.utils.ObjectUtils;
 import com.cloudinary.utils.StringUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class CloudinaryServiceImplementation {
+
+	private static final Logger log = LoggerFactory.getLogger(CloudinaryServiceImplementation.class);
 
 	private final Cloudinary cloudinary;
 

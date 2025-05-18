@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class PaymentIntegrationTest {
 
 	@Autowired

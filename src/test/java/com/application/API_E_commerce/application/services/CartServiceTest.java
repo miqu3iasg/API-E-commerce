@@ -2,6 +2,7 @@ package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.OrderUseCases;
 import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.application.usecases.StockUseCases;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.CartRepository;
@@ -19,13 +20,12 @@ import com.application.API_E_commerce.domain.user.repository.UserRepository;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.EmptyCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.InvalidCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.MissingPaymentMethodException;
+import com.application.API_E_commerce.infrastructure.exceptions.product.InvalidQuantityException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.MissingProductIdException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductNotFoundException;
 import com.application.API_E_commerce.infrastructure.exceptions.user.MissingUserIdException;
 import com.application.API_E_commerce.infrastructure.exceptions.user.UserNotFoundException;
 import com.stripe.exception.StripeException;
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +38,8 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@Slf4j
 @ExtendWith(MockitoExtension.class)
 public class CartServiceTest {
 
@@ -64,6 +63,9 @@ public class CartServiceTest {
 
 	@Mock
 	private ProductUseCases productService;
+
+	@Mock
+	private StockUseCases stockUseCase;
 
 	private static Order mockOrderFactory (Cart cart, User user) {
 		List<OrderItem> orderItems = cart.getItems().stream()
@@ -94,7 +96,6 @@ public class CartServiceTest {
 		} else cart.setItems(new ArrayList<>());
 
 		user.setCarts(List.of(cart));
-
 		return cart;
 	}
 
@@ -125,7 +126,6 @@ public class CartServiceTest {
 		product.setCategory(null);
 		product.setImagesUrl(null);
 		product.setCreatedAt(null);
-
 		return product;
 	}
 
@@ -134,21 +134,24 @@ public class CartServiceTest {
 
 		@Test
 		void shouldCreateCartSuccessfullyWithValidRequest () {
+			// Arrange
 			User user = mockUserFactory();
-			userRepository.saveUser(user);
-
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0, Cart.class));
 
+			// Act
 			Cart cart = cartService.createCart(user.getId());
 
+			// Assert
 			assertNotNull(cart);
 			assertNotNull(cart.getUser());
 			assertNotNull(user.getCarts());
 			assertEquals(CartStatus.ACTIVE, cart.getCartStatus());
 			assertEquals(CartStatus.ACTIVE, user.getCarts().getFirst().getCartStatus());
-			assertEquals(Collections.emptyList(), cart.getItems(), "Should return a empty list.");
+			assertEquals(Collections.emptyList(), cart.getItems(), "Should return an empty list.");
 			assertEquals(0, cart.getItems().size(), "The size of cart items list should be zero.");
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 	}
@@ -157,42 +160,67 @@ public class CartServiceTest {
 	class AddProductToCart {
 
 		@Test
-		@Transactional
 		void shouldAddProductInCartWhenUserAndProductExists () {
-			Product mockProduct = mockProductFactory();
-			mockProduct.setStock(10);
+			// Arrange
+			Product product = mockProductFactory();
+			User user = mockUserFactory();
+			Cart cart = new Cart();
+			cart.setId(UUID.randomUUID());
+			cart.setUser(user);
+			cart.setCartStatus(CartStatus.ACTIVE);
+			cart.setItems(new ArrayList<>());
+			cart.setTotalValue(BigDecimal.ZERO);
+			user.setCarts(List.of(cart));
 
-			productRepository.saveProduct(mockProduct);
-
-			User mockUser = mockUserFactory();
-
-			Cart mockCart = new Cart();
-			mockCart.setId(UUID.randomUUID());
-			mockCart.setUser(mockUser);
-			mockCart.setCartStatus(CartStatus.ACTIVE);
-			mockCart.setItems(new ArrayList<>());
-			mockCart.setTotalValue(BigDecimal.valueOf(1000.0));
-
-			mockUser.setCarts(List.of(mockCart));
-
-			userRepository.saveUser(mockUser);
-
-			when(userRepository.findUserById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-			when(productRepository.findProductById(mockProduct.getId())).thenReturn(Optional.of(mockProduct));
-
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
 			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-			Cart cart = cartService.addProductToCart(mockUser.getId(), mockProduct.getId(), 5);
+			// Act
+			Cart result = cartService.addProductToCart(user.getId(), product.getId(), 5);
 
-			assertNotNull(cart);
-			assertEquals(5, mockProduct.getStock());
-			assertNotNull(cart.getItems());
-			assertEquals(1, cart.getItems().size());
-			assertEquals(mockProduct, cart.getItems().getFirst().getProduct());
-			assertEquals(5, cart.getItems().getFirst().getQuantity());
-			assertEquals(CartStatus.ACTIVE, cart.getCartStatus());
-			assertEquals(mockUser, cart.getUser());
-			assertNotNull(cart.getId());
+			// Assert
+			assertNotNull(result);
+			assertNotNull(result.getItems());
+			assertEquals(1, result.getItems().size());
+			assertEquals(product, result.getItems().getFirst().getProduct());
+			assertEquals(5, result.getItems().getFirst().getQuantity());
+			assertEquals(CartStatus.ACTIVE, result.getCartStatus());
+			assertEquals(user, result.getUser());
+			assertNotNull(result.getId());
+			verify(stockUseCase).decreaseProductStock(product.getId(), 5);
+		}
+
+		@Test
+		void shouldAddProductEvenIfStockUpdateFails () {
+			// Arrange
+			Product product = mockProductFactory();
+			User user = mockUserFactory();
+			Cart cart = new Cart();
+			cart.setId(UUID.randomUUID());
+			cart.setUser(user);
+			cart.setCartStatus(CartStatus.ACTIVE);
+			cart.setItems(new ArrayList<>());
+			cart.setTotalValue(BigDecimal.ZERO);
+			user.setCarts(List.of(cart));
+
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			doThrow(new InvalidQuantityException("Quantity to decrease must be " +
+					"greater than zero."))
+					.when(stockUseCase).decreaseProductStock(product.getId(), 5);
+
+			// Act
+			Cart result = cartService.addProductToCart(user.getId(), product.getId(), 5);
+
+			// Assert
+			assertNotNull(result);
+			assertNotNull(result.getItems());
+			assertEquals(1, result.getItems().size());
+			assertEquals(product, result.getItems().getFirst().getProduct());
+			assertEquals(5, result.getItems().getFirst().getQuantity());
+			verify(stockUseCase).decreaseProductStock(product.getId(), 5);
 		}
 
 	}
@@ -202,59 +230,94 @@ public class CartServiceTest {
 
 		@Test
 		void shouldRemoveProductFromCartWhenUserAndProductExists () {
+			// Arrange
 			User user = mockUserFactory();
-
 			Product product = mockProductFactory();
-			product.setStock(10);
-
-			Cart userCart = mockCartFactory(user, product);
+			Cart cart = mockCartFactory(user, product);
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
 			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 			when(productRepository.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-			cartService.removeProductFromCart(user.getId(), product.getId(), userCart.getId());
+			// Act
+			cartService.removeProductFromCart(user.getId(), product.getId(), cart.getId());
 
-			assertTrue(userCart.getItems().isEmpty(), "The cart should be empty after product removal");
-			assertEquals(new BigDecimal("0.0"), userCart.getTotalValue(), "The total value should be zero after product removal");
-			assertEquals(12, product.getStock(), "The product stock should be updated correctly after removal");
-			assertEquals(user, userCart.getUser(), "The cart should belong to the correct user");
+			// Assert
+			assertTrue(cart.getItems().isEmpty(), "The cart should be empty after product removal");
+			assertTrue(cart.getTotalValue().compareTo(BigDecimal.ZERO) == 0, "The " +
+					"total value should be zero after product removal");
+			assertEquals(user, cart.getUser(), "The cart should belong to the correct user");
+			verify(stockUseCase).increaseProductStock(product.getId(), 2); // Quantidade do item no mockCartFactory
+		}
+
+		@Test
+		void shouldRemoveProductEvenIfStockUpdateFails () {
+			// Arrange
+			User user = mockUserFactory();
+			Product product = mockProductFactory();
+			Cart cart = mockCartFactory(user, product);
+
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(productRepository.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			doThrow(new InvalidQuantityException("Quantity to increase must be greater than zero."))
+					.when(stockUseCase).increaseProductStock(product.getId(), 2);
+
+			// Act
+			cartService.removeProductFromCart(user.getId(), product.getId(), cart.getId());
+
+			// Assert
+			assertTrue(cart.getItems().isEmpty(), "The cart should be empty after product removal");
+			assertTrue(cart.getTotalValue().compareTo(BigDecimal.ZERO) == 0, "The " +
+					"total value should be zero after product removal");
+			verify(stockUseCase).increaseProductStock(product.getId(), 2);
 		}
 
 		@Test
 		void shouldThrowExceptionIfInputIsInvalid () {
+			// Arrange
 			Product product = mockProductFactory();
 			User user = mockUserFactory();
 			Cart cart = mockCartFactory(user, product);
+
+			// Act & Assert
 			assertThrows(MissingUserIdException.class,
-					() -> cartService.removeProductFromCart(null,
-							product.getId(), cart.getId()));
+					() -> cartService.removeProductFromCart(null, product.getId(), cart.getId()));
 			assertThrows(MissingProductIdException.class,
 					() -> cartService.removeProductFromCart(user.getId(), null, cart.getId()));
 			assertThrows(UserNotFoundException.class,
 					() -> cartService.removeProductFromCart(user.getId(), product.getId(), null));
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionIfCartDoesNotExist () {
+			// Arrange
 			Product product = mockProductFactory();
 			User user = mockUserFactory();
 			UUID cartId = UUID.randomUUID();
+
+			// Act & Assert
 			assertThrows(UserNotFoundException.class,
 					() -> cartService.removeProductFromCart(user.getId(), product.getId(), cartId));
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionIfProductIsNotInCart () {
+			// Arrange
 			User user = mockUserFactory();
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, null);
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
+			// Act & Assert
 			assertThrows(ProductNotFoundException.class,
 					() -> cartService.removeProductFromCart(user.getId(), product.getId(), cart.getId()));
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 	}
@@ -264,104 +327,120 @@ public class CartServiceTest {
 
 		@Test
 		void shouldThrowExceptionWhenUserIdIsNull () {
+			// Arrange
 			UUID cartId = UUID.randomUUID();
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
-			assertThrows(MissingUserIdException.class, () ->
-					cartService.checkoutCart(null, cartId, validPaymentMethod)
-			);
+			// Act & Assert
+			assertThrows(MissingUserIdException.class,
+					() -> cartService.checkoutCart(null, cartId, validPaymentMethod));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenCartIdIsNull () {
+			// Arrange
 			UUID userId = UUID.randomUUID();
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
-			assertThrows(MissingProductIdException.class, () ->
-					cartService.checkoutCart(userId, null, validPaymentMethod)
-			);
+			// Act & Assert
+			assertThrows(MissingProductIdException.class,
+					() -> cartService.checkoutCart(userId, null, validPaymentMethod));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenPaymentMethodIsNull () {
+			// Arrange
 			UUID userId = UUID.randomUUID();
 			UUID cartId = UUID.randomUUID();
 
-			assertThrows(MissingPaymentMethodException.class, () ->
-					cartService.checkoutCart(userId, cartId, null)
-			);
+			// Act & Assert
+			assertThrows(MissingPaymentMethodException.class,
+					() -> cartService.checkoutCart(userId, cartId, null));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenPaymentMethodIsInvalid () {
+			// Arrange
 			UUID userId = UUID.randomUUID();
 			UUID cartId = UUID.randomUUID();
 
-			assertThrows(IllegalArgumentException.class, () ->
-					cartService.checkoutCart(userId, cartId, PaymentMethod.valueOf("BITCOIN"))
-			);
+			// Act & Assert
+			assertThrows(IllegalArgumentException.class,
+					() -> cartService.checkoutCart(userId, cartId, PaymentMethod.valueOf("BITCOIN")));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenUserDoesNotExist () {
+			// Arrange
 			UUID userId = UUID.randomUUID();
 			UUID cartId = UUID.randomUUID();
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 
-			assertThrows(UserNotFoundException.class, () ->
-					cartService.checkoutCart(userId, cartId, validPaymentMethod)
-			);
+			// Act & Assert
+			assertThrows(UserNotFoundException.class,
+					() -> cartService.checkoutCart(userId, cartId, validPaymentMethod));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenCartDoesNotExist () {
+			// Arrange
 			UUID cartId = UUID.randomUUID();
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 			User user = mockUserFactory();
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
-			assertThrows(InvalidCartException.class, () ->
-					cartService.checkoutCart(user.getId(), cartId, validPaymentMethod)
-			);
+			// Act & Assert
+			assertThrows(InvalidCartException.class,
+					() -> cartService.checkoutCart(user.getId(), cartId, validPaymentMethod));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowExceptionWhenCartIsEmpty () {
+			// Arrange
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
-
 			User user = mockUserFactory();
 			Cart cart = mockCartFactory(user, null);
 			cart.setItems(List.of());
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
-			assertThrows(EmptyCartException.class, () ->
-					cartService.checkoutCart(user.getId(), cart.getId(), validPaymentMethod)
-			);
+			// Act & Assert
+			assertThrows(EmptyCartException.class,
+					() -> cartService.checkoutCart(user.getId(), cart.getId(), validPaymentMethod));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldProcessCheckoutSuccessfully () throws StripeException {
+			// Arrange
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 			User user = mockUserFactory();
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
-
 			Order order = mockOrderFactory(cart, user);
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 			when(orderUseCases.createOrderCheckout(any())).thenReturn(order);
 			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+			// Act
 			cartService.checkoutCart(user.getId(), cart.getId(), validPaymentMethod);
 
+			// Assert
 			assertEquals(CartStatus.COMPLETED, cart.getCartStatus());
 			assertFalse(user.getOrders().isEmpty(), "User should have at least one order after checkout");
 			assertNotNull(cart.getId(), "The cart id should not be null");
 			assertEquals(user, cart.getUser(), "The cart should belong to the correct user");
 			assertFalse(cart.getItems().isEmpty(), "The cart should not be empty");
 			assertEquals(product, cart.getItems().getFirst().getProduct(), "The product in the cart should match");
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt()); // Estoque já reservado em addProductToCart
 		}
 
 	}
@@ -371,14 +450,17 @@ public class CartServiceTest {
 
 		@Test
 		void shouldReturnCartItemsWhenValidInput () {
+			// Arrange
 			Product product = mockProductFactory();
 			User user = mockUserFactory();
 			Cart cart = mockCartFactory(user, product);
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
+			// Act
 			List<CartItem> itemsInCart = cartService.getItemsInCart(user.getId(), cart.getId());
 
+			// Assert
 			assertAll(
 					() -> assertNotNull(itemsInCart, "The result should not be null"),
 					() -> assertFalse(itemsInCart.isEmpty(), "The result should not be empty"),
@@ -387,18 +469,24 @@ public class CartServiceTest {
 					() -> assertThrows(UnsupportedOperationException.class, () -> itemsInCart.add(new CartItem()),
 							"The result should be unmodifiable")
 			);
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldThrowWhenIdsAreNull () {
-			assertThrows(MissingUserIdException.class, () -> cartService.getItemsInCart(null,
-					UUID.randomUUID()));
+			// Act & Assert
+			assertThrows(MissingUserIdException.class,
+					() -> cartService.getItemsInCart(null, UUID.randomUUID()));
 			assertThrows(MissingProductIdException.class,
 					() -> cartService.getItemsInCart(UUID.randomUUID(), null));
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 		@Test
 		void shouldReturnEmptyListForCartWithEmptyItems () {
+			// Arrange
 			User user = mockUserFactory();
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
@@ -406,7 +494,10 @@ public class CartServiceTest {
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
 
+			// Act & Assert
 			assertTrue(cartService.getItemsInCart(user.getId(), cart.getId()).isEmpty());
+			verify(stockUseCase, never()).decreaseProductStock(any(), anyInt());
+			verify(stockUseCase, never()).increaseProductStock(any(), anyInt());
 		}
 
 	}
@@ -416,22 +507,51 @@ public class CartServiceTest {
 
 		@Test
 		void shouldRemoveItemsInCartWithCartAndUserExists () {
+			// Arrange
 			User user = mockUserFactory();
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
 
 			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+			// Act
 			cartService.clearCart(user.getId(), cart.getId());
 
-			// validar se o estoque do produto foi restaurado após a limpeza
-
+			// Assert
 			assertNotNull(cart);
 			assertNotNull(cart.getId());
 			assertNotNull(cart.getUser());
 			assertEquals(CartStatus.ABANDONED, cart.getCartStatus());
-			assertEquals(Collections.emptyList(), cart.getItems(), "Should return a empty list.");
+			assertEquals(Collections.emptyList(), cart.getItems(), "Should return an empty list.");
 			assertEquals(0, cart.getItems().size(), "The size of cart items list should be zero.");
+			verify(stockUseCase).increaseProductStock(product.getId(), 2); // Quantidade do item no mockCartFactory
+		}
+
+		@Test
+		void shouldClearCartEvenIfStockUpdateFails () {
+			// Arrange
+			User user = mockUserFactory();
+			Product product = mockProductFactory();
+			Cart cart = mockCartFactory(user, product);
+
+			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+			doThrow(new InvalidQuantityException("Quantity to increase must be greater than zero."))
+					.when(stockUseCase).increaseProductStock(product.getId(), 2);
+
+			// Act
+			cartService.clearCart(user.getId(), cart.getId());
+
+			// Assert
+			assertNotNull(cart);
+			assertNotNull(cart.getId());
+			assertNotNull(cart.getUser());
+			assertEquals(CartStatus.ABANDONED, cart.getCartStatus());
+			assertEquals(Collections.emptyList(), cart.getItems(), "Should return an empty list.");
+			assertEquals(0, cart.getItems().size(), "The size of cart items list should be zero.");
+			verify(stockUseCase).increaseProductStock(product.getId(), 2);
 		}
 
 	}

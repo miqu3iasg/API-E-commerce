@@ -11,14 +11,14 @@ import com.application.API_E_commerce.domain.product.repository.ProductRepositor
 import com.application.API_E_commerce.infrastructure.exceptions.NullParametersException;
 import com.application.API_E_commerce.infrastructure.exceptions.category.CategoryAlreadyExistsException;
 import com.application.API_E_commerce.infrastructure.exceptions.category.CategoryNotFoundException;
-import com.application.API_E_commerce.infrastructure.exceptions.product.InvalidQuantityException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductImageNotFoundException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductNotFoundException;
-import com.application.API_E_commerce.infrastructure.exceptions.product.ProductOutOfStockException;
 import com.application.API_E_commerce.utils.validators.CategoryValidator;
 import com.application.API_E_commerce.utils.validators.ProductValidator;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -32,6 +32,8 @@ import java.util.UUID;
 @Service
 @Transactional(rollbackOn = Exception.class)
 public class ProductServiceImplementation implements ProductUseCases {
+
+	private static final Logger log = LoggerFactory.getLogger(ProductServiceImplementation.class);
 
 	private final ProductRepository productRepository;
 	private final ProductValidator productValidator;
@@ -184,7 +186,8 @@ public class ProductServiceImplementation implements ProductUseCases {
 	private void uploadImageToCloudinary (String imageUrl, UUID productId) throws IOException {
 		try {
 			cloudinaryServiceImplementation.uploadToImageCloudinary(imageUrl, productId);
-			log.info("Image successfully uploaded to Cloudinary with url: {}", imageUrl);
+			log.info("Image successfully uploaded to Cloudinary with url: {}",
+					imageUrl);
 		} catch (IOException exception) {
 			log.error("Error uploading image to Cloudinary: {}", exception.getMessage());
 			throw exception;
@@ -211,41 +214,6 @@ public class ProductServiceImplementation implements ProductUseCases {
 		productRepository.saveProduct(product);
 
 		log.info("Image removed from product {} and deleted from Cloudinary.", productId);
-	}
-
-	@Override
-	public void increaseProductStock (UUID productId, int quantityToIncrease) {
-		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
-
-		int actualStock = product.getStock();
-
-		if (quantityToIncrease <= 0)
-			throw new InvalidQuantityException("Quantity to increase must be greater than zero.");
-
-		int stockAfterIncrease = actualStock + quantityToIncrease;
-
-		product.setStock(stockAfterIncrease);
-
-		productRepository.saveProduct(product);
-	}
-
-	@Override
-	public void decreaseProductStock (UUID productId, int quantityToDecrease) {
-		Product product = productValidator.validateIfProductExistsAndReturnTheExistingProduct(productId);
-
-		int actualStock = product.getStock();
-
-		if (quantityToDecrease <= 0)
-			throw new InvalidQuantityException("Quantity to decrease must be greater than zero.");
-
-		if (actualStock - quantityToDecrease < 0)
-			throw new ProductOutOfStockException("Product stock cannot be negative.");
-
-		int stockAfterDecrease = actualStock - quantityToDecrease;
-
-		product.setStock(stockAfterDecrease);
-
-		productRepository.saveProduct(product);
 	}
 
 	@Override

@@ -2,7 +2,7 @@ package com.application.API_E_commerce.application.services;
 
 import com.application.API_E_commerce.application.usecases.CartUseCases;
 import com.application.API_E_commerce.application.usecases.OrderUseCases;
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.application.usecases.StockUseCases;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.CartRepository;
 import com.application.API_E_commerce.domain.cart.CartStatus;
@@ -31,6 +31,8 @@ import com.application.API_E_commerce.infrastructure.exceptions.user.MissingUser
 import com.application.API_E_commerce.infrastructure.exceptions.user.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,13 +44,15 @@ import java.util.*;
 @Component
 public class CartServiceImplementation implements CartUseCases {
 
+	private static final Logger log = LoggerFactory.getLogger(CartServiceImplementation.class);
+
 	private final CartRepository cartRepository;
 	private final ProductRepository productRepository;
 	private final UserRepository userRepository;
 	private final CartItemRepository cartItemRepository;
 	private final OrderUseCases orderUseCases;
 	private final OrderRepository orderRepository;
-	private final ProductUseCases productService;
+	private final StockUseCases stockService;
 
 	@Autowired
 	public CartServiceImplementation (
@@ -58,7 +62,7 @@ public class CartServiceImplementation implements CartUseCases {
 			CartItemRepository cartItemRepository,
 			OrderUseCases orderUseCases,
 			OrderRepository orderRepository,
-			ProductUseCases productService
+			StockUseCases stockService
 	) {
 		this.cartRepository = cartRepository;
 		this.productRepository = productRepository;
@@ -66,7 +70,7 @@ public class CartServiceImplementation implements CartUseCases {
 		this.cartItemRepository = cartItemRepository;
 		this.orderUseCases = orderUseCases;
 		this.orderRepository = orderRepository;
-		this.productService = productService;
+		this.stockService = stockService;
 	}
 
 	@Override
@@ -126,7 +130,12 @@ public class CartServiceImplementation implements CartUseCases {
 		BigDecimal totalValue = cart.getTotalValue().add(existingProduct.getPrice().multiply(BigDecimal.valueOf(quantity)));
 		cart.setTotalValue(totalValue);
 
-		existingProduct.setStock(existingProduct.getStock() - quantity);
+		try {
+			stockService.decreaseProductStock(existingProduct.getId(), quantity);
+		} catch (Exception e) {
+			log.error("Failed to restore stock for product when adding to cart {}: " +
+					"{}", existingProduct.getId(), e.getMessage());
+		}
 		existingProduct.setItems(items);
 
 		productRepository.saveProduct(existingProduct);
@@ -198,12 +207,17 @@ public class CartServiceImplementation implements CartUseCases {
 		items.removeIf(item -> item.getProduct().getId().equals(product.getId()));
 
 		if (quantityRemoved > 0) {
-			product.setStock(product.getStock() + quantityRemoved);
+			try {
+				stockService.increaseProductStock(product.getId(), quantityRemoved);
+			} catch (Exception e) {
+				log.error("Failed to restore stock for product when removing from cart {}: {}",
+						product.getId(), e.getMessage());
+			}
 			BigDecimal totalValueAfterRemoval = product.getPrice().multiply(BigDecimal.valueOf(quantityRemoved));
 			cart.setTotalValue(cart.getTotalValue().subtract(totalValueAfterRemoval));
 		}
 
-		cart.setTotalValue(cart.getTotalValue().max(BigDecimal.ZERO));
+		cart.setTotalValue(cart.getTotalValue().max(BigDecimal.ZERO).stripTrailingZeros());
 
 		productRepository.saveProduct(product);
 
@@ -240,7 +254,11 @@ public class CartServiceImplementation implements CartUseCases {
 			Product product = item.getProduct();
 			int quantityToRestore = item.getQuantity();
 
-			productService.increaseProductStock(product.getId(), quantityToRestore);
+			try {
+				stockService.increaseProductStock(product.getId(), quantityToRestore);
+			} catch (Exception e) {
+				log.error("Failed to restore stock for product {}: {}", product.getId(), e.getMessage());
+			}
 		}
 
 		cart.setItems(Collections.emptyList());
