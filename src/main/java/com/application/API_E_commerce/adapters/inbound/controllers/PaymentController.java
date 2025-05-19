@@ -1,10 +1,10 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.PaymentUseCases;
-import com.application.API_E_commerce.domain.payment.CheckoutSessionResponseDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.CheckoutSessionResponseDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.PaymentIntentResponseDTO;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.payment.Payment;
-import com.application.API_E_commerce.domain.payment.PaymentIntentResponseDTO;
-import com.application.API_E_commerce.response.ApiResponse;
+import com.application.API_E_commerce.domain.payment.useCase.PaymentUseCase;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Payment", description = "Operations pertaining to payment processing")
 public class PaymentController {
 
-	private final PaymentUseCases paymentService;
+	private final PaymentUseCase paymentService;
 
-	public PaymentController (PaymentUseCases paymentService) {
+	public PaymentController (PaymentUseCase paymentService) {
 		this.paymentService = paymentService;
 	}
 

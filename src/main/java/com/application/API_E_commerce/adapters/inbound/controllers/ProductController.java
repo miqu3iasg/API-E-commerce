@@ -1,14 +1,14 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateProductRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.ProductFiltersCriteria;
+import com.application.API_E_commerce.adapters.inbound.dtos.ProductResponseDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.UpdateProductRequestDTO;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.category.Category;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
-import com.application.API_E_commerce.domain.product.dtos.ProductFiltersCriteria;
-import com.application.API_E_commerce.domain.product.dtos.ProductResponseDTO;
-import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDTO;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductImageNotFoundException;
-import com.application.API_E_commerce.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -30,9 +30,9 @@ import java.util.UUID;
 @Tag(name = "Product", description = "Operations pertaining to product management")
 public class ProductController {
 
-	private final ProductUseCases productService;
+	private final ProductUseCase productService;
 
-	public ProductController (ProductUseCases productService) {
+	public ProductController (ProductUseCase productService) {
 		this.productService = productService;
 	}
 

@@ -1,14 +1,10 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.OrderUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.*;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderStatus;
-import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
-import com.application.API_E_commerce.domain.order.dtos.OrderResponseDTO;
-import com.application.API_E_commerce.domain.order.dtos.OrderStatusResponseDTO;
-import com.application.API_E_commerce.domain.payment.dtos.PaymentResponseDTO;
-import com.application.API_E_commerce.domain.user.dtos.UserResponseDTO;
-import com.application.API_E_commerce.response.ApiResponse;
+import com.application.API_E_commerce.domain.order.useCase.OrderUseCase;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,9 +26,9 @@ import java.util.UUID;
 @Tag(name = "Order", description = "Operations pertaining to order management")
 public class OrderController {
 
-	private final OrderUseCases orderService;
+	private final OrderUseCase orderService;
 
-	public OrderController (OrderUseCases orderService) {
+	public OrderController (OrderUseCase orderService) {
 		this.orderService = orderService;
 	}
 

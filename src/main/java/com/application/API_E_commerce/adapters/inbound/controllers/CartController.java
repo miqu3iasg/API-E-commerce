@@ -1,13 +1,13 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.CartUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.AddProductToCartRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.CartResponseDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.UserResponseDTO;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.cart.Cart;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
-import com.application.API_E_commerce.domain.cart.dtos.AddProductToCartRequestDTO;
-import com.application.API_E_commerce.domain.cart.dtos.CartResponseDTO;
+import com.application.API_E_commerce.domain.cart.useCase.CartUseCase;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
-import com.application.API_E_commerce.domain.user.dtos.UserResponseDTO;
-import com.application.API_E_commerce.response.ApiResponse;
 import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,9 +29,9 @@ import java.util.UUID;
 @Tag(name = "Cart", description = "Operations pertaining to cart management")
 public class CartController {
 
-	private final CartUseCases cartService;
+	private final CartUseCase cartService;
 
-	public CartController (CartUseCases cartService) {
+	public CartController (CartUseCase cartService) {
 		this.cartService = cartService;
 	}
 

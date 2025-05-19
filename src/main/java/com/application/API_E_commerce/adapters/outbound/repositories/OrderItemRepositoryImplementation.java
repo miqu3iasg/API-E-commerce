@@ -1,8 +1,9 @@
 package com.application.API_E_commerce.adapters.outbound.repositories;
 
+import com.application.API_E_commerce.adapters.outbound.repositories.jpa.JpaOrderItemRepository;
+import com.application.API_E_commerce.common.utils.mappers.OrderItemMapper;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
-import com.application.API_E_commerce.domain.order.orderitem.OrderItemRepository;
-import com.application.API_E_commerce.utils.mappers.OrderItemMapper;
+import com.application.API_E_commerce.domain.order.orderitem.repository.OrderItemRepositoryPort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -10,39 +11,41 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class OrderItemRepositoryImplementation implements OrderItemRepository {
-  private final JpaOrderItemRepository jpaOrderItemRepository;
-  private final OrderItemMapper orderItemMapper;
+public class OrderItemRepositoryImplementation implements OrderItemRepositoryPort {
 
-  public OrderItemRepositoryImplementation(JpaOrderItemRepository jpaOrderItemRepository, OrderItemMapper orderItemMapper) {
-    this.jpaOrderItemRepository = jpaOrderItemRepository;
-    this.orderItemMapper = orderItemMapper;
-  }
+	private final JpaOrderItemRepository jpaOrderItemRepository;
+	private final OrderItemMapper orderItemMapper;
 
-  @Override
-  public OrderItem saveOrderItem(OrderItem orderItem) {
-    return null;
-  }
+	public OrderItemRepositoryImplementation (JpaOrderItemRepository jpaOrderItemRepository, OrderItemMapper orderItemMapper) {
+		this.jpaOrderItemRepository = jpaOrderItemRepository;
+		this.orderItemMapper = orderItemMapper;
+	}
 
-  @Override
-  public Optional<OrderItem> findOrderItemById(UUID orderItemId) {
-    return Optional.ofNullable(jpaOrderItemRepository.findById(orderItemId)
-            .map(orderItemMapper::toDomain)
-            .orElseThrow(() -> new IllegalArgumentException("Order item not found.")));
-  }
+	@Override
+	public OrderItem saveOrderItem (OrderItem orderItem) {
+		return null;
+	}
 
-  @Override
-  public List<OrderItem> findAllOrderItems() {
-    return List.of();
-  }
+	@Override
+	public Optional<OrderItem> findOrderItemById (UUID orderItemId) {
+		return Optional.ofNullable(jpaOrderItemRepository.findById(orderItemId)
+				.map(orderItemMapper::toDomain)
+				.orElseThrow(() -> new IllegalArgumentException("Order item not found.")));
+	}
 
-  @Override
-  public void deleteOrderItemById(UUID id) {
+	@Override
+	public List<OrderItem> findAllOrderItems () {
+		return List.of();
+	}
 
-  }
+	@Override
+	public void deleteOrderItemById (UUID id) {
 
-  @Override
-  public void deleteOrderItem(OrderItem orderItem) {
+	}
 
-  }
+	@Override
+	public void deleteOrderItem (OrderItem orderItem) {
+
+	}
+
 }

@@ -1,22 +1,23 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.OrderUseCases;
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
-import com.application.API_E_commerce.application.usecases.StockUseCases;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.cart.Cart;
-import com.application.API_E_commerce.domain.cart.CartRepository;
 import com.application.API_E_commerce.domain.cart.CartStatus;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
+import com.application.API_E_commerce.domain.cart.repository.CartRepositoryPort;
+import com.application.API_E_commerce.domain.cart.services.CartService;
 import com.application.API_E_commerce.domain.order.Order;
-import com.application.API_E_commerce.domain.order.OrderRepository;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
+import com.application.API_E_commerce.domain.order.repository.OrderRepositoryPort;
+import com.application.API_E_commerce.domain.order.useCase.OrderUseCase;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.repository.ProductRepository;
+import com.application.API_E_commerce.domain.product.repository.ProductRepositoryPort;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
+import com.application.API_E_commerce.domain.stock.useCase.StockUseCase;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
-import com.application.API_E_commerce.domain.user.repository.UserRepository;
+import com.application.API_E_commerce.domain.user.repository.UserRepositoryPort;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.EmptyCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.cart.InvalidCartException;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.MissingPaymentMethodException;
@@ -44,28 +45,28 @@ import static org.mockito.Mockito.*;
 public class CartServiceTest {
 
 	@InjectMocks
-	private CartServiceImplementation cartService;
+	private CartService cartService;
 
 	@Mock
-	private CartRepository cartRepository;
+	private CartRepositoryPort cartRepositoryPort;
 
 	@Mock
-	private ProductRepository productRepository;
+	private ProductRepositoryPort productRepositoryPort;
 
 	@Mock
-	private UserRepository userRepository;
+	private UserRepositoryPort userRepositoryPort;
 
 	@Mock
-	private OrderUseCases orderUseCases;
+	private OrderUseCase orderUseCase;
 
 	@Mock
-	private OrderRepository orderRepository;
+	private OrderRepositoryPort orderRepositoryPort;
 
 	@Mock
-	private ProductUseCases productService;
+	private ProductUseCase productService;
 
 	@Mock
-	private StockUseCases stockUseCase;
+	private StockUseCase stockUseCase;
 
 	private static Order mockOrderFactory (Cart cart, User user) {
 		List<OrderItem> orderItems = cart.getItems().stream()
@@ -136,8 +137,8 @@ public class CartServiceTest {
 		void shouldCreateCartSuccessfullyWithValidRequest () {
 			// Arrange
 			User user = mockUserFactory();
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0, Cart.class));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0, Cart.class));
 
 			// Act
 			Cart cart = cartService.createCart(user.getId());
@@ -172,9 +173,9 @@ public class CartServiceTest {
 			cart.setTotalValue(BigDecimal.ZERO);
 			user.setCarts(List.of(cart));
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepositoryPort.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 			// Act
 			Cart result = cartService.addProductToCart(user.getId(), product.getId(), 5);
@@ -204,9 +205,9 @@ public class CartServiceTest {
 			cart.setTotalValue(BigDecimal.ZERO);
 			user.setCarts(List.of(cart));
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepositoryPort.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 			doThrow(new InvalidQuantityException("Quantity to decrease must be " +
 					"greater than zero."))
 					.when(stockUseCase).decreaseProductStock(product.getId(), 5);
@@ -235,10 +236,10 @@ public class CartServiceTest {
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-			when(productRepository.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepositoryPort.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(productRepositoryPort.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 			// Act
 			cartService.removeProductFromCart(user.getId(), product.getId(), cart.getId());
@@ -258,10 +259,10 @@ public class CartServiceTest {
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(productRepository.findProductById(product.getId())).thenReturn(Optional.of(product));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-			when(productRepository.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(productRepositoryPort.findProductById(product.getId())).thenReturn(Optional.of(product));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(productRepositoryPort.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 			doThrow(new InvalidQuantityException("Quantity to increase must be greater than zero."))
 					.when(stockUseCase).increaseProductStock(product.getId(), 2);
 
@@ -312,7 +313,7 @@ public class CartServiceTest {
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, null);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			// Act & Assert
 			assertThrows(ProductNotFoundException.class,
@@ -393,7 +394,7 @@ public class CartServiceTest {
 			final PaymentMethod validPaymentMethod = PaymentMethod.CARD;
 			User user = mockUserFactory();
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			// Act & Assert
 			assertThrows(InvalidCartException.class,
@@ -409,7 +410,7 @@ public class CartServiceTest {
 			Cart cart = mockCartFactory(user, null);
 			cart.setItems(List.of());
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			// Act & Assert
 			assertThrows(EmptyCartException.class,
@@ -426,9 +427,9 @@ public class CartServiceTest {
 			Cart cart = mockCartFactory(user, product);
 			Order order = mockOrderFactory(cart, user);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(orderUseCases.createOrderCheckout(any())).thenReturn(order);
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(orderUseCase.createOrderCheckout(any())).thenReturn(order);
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 			// Act
 			cartService.checkoutCart(user.getId(), cart.getId(), validPaymentMethod);
@@ -455,7 +456,7 @@ public class CartServiceTest {
 			User user = mockUserFactory();
 			Cart cart = mockCartFactory(user, product);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			// Act
 			List<CartItem> itemsInCart = cartService.getItemsInCart(user.getId(), cart.getId());
@@ -492,7 +493,7 @@ public class CartServiceTest {
 			Cart cart = mockCartFactory(user, product);
 			cart.setItems(List.of());
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			// Act & Assert
 			assertTrue(cartService.getItemsInCart(user.getId(), cart.getId()).isEmpty());
@@ -512,8 +513,8 @@ public class CartServiceTest {
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 			// Act
 			cartService.clearCart(user.getId(), cart.getId());
@@ -535,8 +536,8 @@ public class CartServiceTest {
 			Product product = mockProductFactory();
 			Cart cart = mockCartFactory(user, product);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
-			when(cartRepository.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(cartRepositoryPort.saveCart(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 			doThrow(new InvalidQuantityException("Quantity to increase must be greater than zero."))
 					.when(stockUseCase).increaseProductStock(product.getId(), 2);

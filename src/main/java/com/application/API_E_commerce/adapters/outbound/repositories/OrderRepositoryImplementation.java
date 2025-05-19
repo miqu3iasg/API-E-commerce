@@ -1,9 +1,10 @@
 package com.application.API_E_commerce.adapters.outbound.repositories;
 
 import com.application.API_E_commerce.adapters.outbound.entities.order.JpaOrderEntity;
+import com.application.API_E_commerce.adapters.outbound.repositories.jpa.JpaOrderRepository;
+import com.application.API_E_commerce.common.utils.mappers.OrderMapper;
 import com.application.API_E_commerce.domain.order.Order;
-import com.application.API_E_commerce.domain.order.OrderRepository;
-import com.application.API_E_commerce.utils.mappers.OrderMapper;
+import com.application.API_E_commerce.domain.order.repository.OrderRepositoryPort;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -12,46 +13,48 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class OrderRepositoryImplementation implements OrderRepository {
-  private final JpaOrderRepository jpaOrderRepository;
-  private final OrderMapper orderMapper;
+public class OrderRepositoryImplementation implements OrderRepositoryPort {
 
-  public OrderRepositoryImplementation(JpaOrderRepository jpaOrderRepository, OrderMapper orderMapper) {
-    this.jpaOrderRepository = jpaOrderRepository;
-    this.orderMapper = orderMapper;
-  }
+	private final JpaOrderRepository jpaOrderRepository;
+	private final OrderMapper orderMapper;
 
-  @Override
-  public Order saveOrder(Order order) {
-    JpaOrderEntity orderEntityToSave = orderMapper.toJpa(order);
+	public OrderRepositoryImplementation (JpaOrderRepository jpaOrderRepository, OrderMapper orderMapper) {
+		this.jpaOrderRepository = jpaOrderRepository;
+		this.orderMapper = orderMapper;
+	}
 
-    JpaOrderEntity savedOrderEntity = this.jpaOrderRepository.save(orderEntityToSave);
+	@Override
+	public Order saveOrder (Order order) {
+		JpaOrderEntity orderEntityToSave = orderMapper.toJpa(order);
 
-    return orderMapper.toDomain(savedOrderEntity);
-  }
+		JpaOrderEntity savedOrderEntity = jpaOrderRepository.save(orderEntityToSave);
 
-  @Override
-  public List<Order> findAllOrders() {
-    List<JpaOrderEntity> jpaOrderEntityList = this.jpaOrderRepository.findAll();
+		return orderMapper.toDomain(savedOrderEntity);
+	}
 
-    if (jpaOrderEntityList.isEmpty()) return Collections.emptyList();
+	@Override
+	public List<Order> findAllOrders () {
+		List<JpaOrderEntity> jpaOrderEntityList = jpaOrderRepository.findAll();
 
-    return jpaOrderEntityList.stream().map(orderMapper::toDomain).toList();
-  }
+		if (jpaOrderEntityList.isEmpty()) return Collections.emptyList();
 
-  @Override
-  public Optional<Order> findOrderById(UUID orderId) {
-    return Optional.ofNullable(jpaOrderRepository.findById(orderId)
-            .map(orderMapper::toDomain)
-            .orElseThrow(() -> new IllegalArgumentException("Order was not found when searching for id in the repository.")));
-  }
+		return jpaOrderEntityList.stream().map(orderMapper::toDomain).toList();
+	}
 
-  @Override
-  public void deleteOrder(UUID orderId) {
-    this.jpaOrderRepository.findById(orderId)
-            .map(existingOrderEntity -> {
-              this.jpaOrderRepository.deleteById(orderId);
-              return existingOrderEntity;
-            }).orElseThrow(() -> new IllegalArgumentException("Order was not found when searching for id in the delete product by id method."));
-  }
+	@Override
+	public Optional<Order> findOrderById (UUID orderId) {
+		return Optional.ofNullable(jpaOrderRepository.findById(orderId)
+				.map(orderMapper::toDomain)
+				.orElseThrow(() -> new IllegalArgumentException("Order was not found when searching for id in the repository.")));
+	}
+
+	@Override
+	public void deleteOrder (UUID orderId) {
+		jpaOrderRepository.findById(orderId)
+				.map(existingOrderEntity -> {
+					jpaOrderRepository.deleteById(orderId);
+					return existingOrderEntity;
+				}).orElseThrow(() -> new IllegalArgumentException("Order was not found when searching for id in the delete product by id method."));
+	}
+
 }

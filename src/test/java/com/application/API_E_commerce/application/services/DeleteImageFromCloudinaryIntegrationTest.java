@@ -1,8 +1,10 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.adapters.outbound.repositories.ProductRepositoryImplementation;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateProductRequestDTO;
+import com.application.API_E_commerce.domain.image.gateways.ImageStorageGateway;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
+import com.application.API_E_commerce.domain.product.repository.ProductRepositoryPort;
+import com.application.API_E_commerce.domain.product.services.ProductService;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductImageNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +29,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class DeleteImageFromCloudinaryIntegrationTest {
 
 	@Autowired
-	ProductServiceImplementation productService;
+	ProductService productService;
 
 	@Autowired
-	ProductRepositoryImplementation productRepository;
+	ProductRepositoryPort productRepository;
 
 	@Autowired
-	CloudinaryServiceImplementation cloudinaryService;
+	ImageStorageGateway imageStorageGateway;
 
 	@Test
 	void shouldDeleteImageFromCloudinaryWithPublicIdSuccessfully () throws IOException, ProductImageNotFoundException {
@@ -51,7 +53,7 @@ class DeleteImageFromCloudinaryIntegrationTest {
 				"https://media.istockphoto.com/id/496603666/pt/vetorial/%C3%ADcone-plana-verifica%C3%A7%C3%A3o.jpg?s=612x612&w=0&k=20&c=59xwMZUHiaI53N1ouEYGjVsdbanq4iXqiU_MppilZ7M="
 		);
 
-		cloudinaryService.uploadToImageCloudinary(imageUrls.getFirst(), productId);
+		imageStorageGateway.uploadImage(imageUrls.getFirst(), productId);
 
 		productService.uploadProductImage(productId, imageUrls);
 

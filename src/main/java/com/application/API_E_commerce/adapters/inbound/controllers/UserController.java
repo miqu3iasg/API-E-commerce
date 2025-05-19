@@ -1,14 +1,10 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.UserUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.*;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.address.Address;
-import com.application.API_E_commerce.domain.address.dtos.UpdateAddressRequestDTO;
 import com.application.API_E_commerce.domain.user.User;
-import com.application.API_E_commerce.domain.user.dtos.CreateUserRequestDTO;
-import com.application.API_E_commerce.domain.user.dtos.UpdateUserNameRequestDTO;
-import com.application.API_E_commerce.domain.user.dtos.UpdateUserPasswordRequestDTO;
-import com.application.API_E_commerce.domain.user.dtos.UserResponseDTO;
-import com.application.API_E_commerce.response.ApiResponse;
+import com.application.API_E_commerce.domain.user.useCase.UserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -29,9 +25,9 @@ import java.util.UUID;
 @Tag(name = "User", description = "Operations pertaining to user management")
 public class UserController {
 
-	private final UserUseCases userService;
+	private final UserUseCase userService;
 
-	public UserController (UserUseCases userService) {
+	public UserController (UserUseCase userService) {
 		this.userService = userService;
 	}
 

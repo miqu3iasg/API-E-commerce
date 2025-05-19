@@ -1,7 +1,7 @@
 package com.application.API_E_commerce.adapters.inbound.messaging;
 
-import com.application.API_E_commerce.application.services.StockServiceImplementation;
-import com.application.API_E_commerce.domain.product.dtos.StockUpdateEvent;
+import com.application.API_E_commerce.adapters.inbound.dtos.StockUpdateEvent;
+import com.application.API_E_commerce.domain.stock.services.StockService;
 import com.application.API_E_commerce.infrastructure.exceptions.product.InvalidQuantityException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.ProductOutOfStockException;
 import com.application.API_E_commerce.infrastructure.exceptions.product.StockUpdateException;
@@ -25,11 +25,11 @@ public class StockUpdateListener {
 	private static final String DLX_NAME = "stock.dlx";
 	private static final String DLQ_ROUTING_KEY = "stock.update.dlq";
 
-	private final StockServiceImplementation stockServiceImplementation;
+	private final StockService stockService;
 	private final RabbitTemplate rabbitTemplate;
 
-	public StockUpdateListener (StockServiceImplementation stockServiceImplementation, RabbitTemplate rabbitTemplate) {
-		this.stockServiceImplementation = stockServiceImplementation;
+	public StockUpdateListener (StockService stockService, RabbitTemplate rabbitTemplate) {
+		this.stockService = stockService;
 		this.rabbitTemplate = rabbitTemplate;
 	}
 
@@ -51,7 +51,7 @@ public class StockUpdateListener {
 		Integer retryCount = (Integer) props.getHeaders().getOrDefault(RETRY_COUNT_HEADER, 0);
 
 		try {
-			stockServiceImplementation.processStockUpdate(event);
+			stockService.processStockUpdate(event);
 			logger.info("Stock update processed successfully: correlationId={}", correlationId);
 		} catch (
 				InvalidQuantityException |

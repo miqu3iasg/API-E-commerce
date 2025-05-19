@@ -1,12 +1,13 @@
 package com.application.API_E_commerce.application.services;
 
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateUserRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.UpdateAddressRequestDTO;
 import com.application.API_E_commerce.domain.address.Address;
-import com.application.API_E_commerce.domain.address.AddressRepository;
-import com.application.API_E_commerce.domain.address.AddressUseCases;
-import com.application.API_E_commerce.domain.address.dtos.UpdateAddressRequestDTO;
+import com.application.API_E_commerce.domain.address.repository.AddressRepositoryPort;
+import com.application.API_E_commerce.domain.address.useCase.AddressUseCase;
 import com.application.API_E_commerce.domain.user.User;
-import com.application.API_E_commerce.domain.user.dtos.CreateUserRequestDTO;
-import com.application.API_E_commerce.domain.user.repository.UserRepository;
+import com.application.API_E_commerce.domain.user.repository.UserRepositoryPort;
+import com.application.API_E_commerce.domain.user.services.UserService;
 import com.application.API_E_commerce.factory.CreateUserRequestFactory;
 import com.application.API_E_commerce.factory.UpdateAddressRequestFactory;
 import com.application.API_E_commerce.factory.UserFactory;
@@ -28,16 +29,16 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
 	@InjectMocks
-	private UserServiceImplementation userService;
+	private UserService userService;
 
 	@Mock
-	private UserRepository userRepository;
+	private UserRepositoryPort userRepositoryPort;
 
 	@Mock
-	private AddressUseCases addressService;
+	private AddressUseCase addressService;
 
 	@Mock
-	private AddressRepository addressRepository;
+	private AddressRepositoryPort addressRepositoryPort;
 
 	@Nested
 	class CreateUser {
@@ -54,11 +55,11 @@ class UserServiceTest {
 			mockAddress.setZipCode(request.address().zipCode());
 			mockAddress.setCountry(request.address().country());
 
-			when(userRepository.saveUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0, User.class));
+			when(userRepositoryPort.saveUser(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0, User.class));
 
 			User createdUser = userService.createUser(request);
 
-			verify(userRepository).saveUser(any(User.class));
+			verify(userRepositoryPort).saveUser(any(User.class));
 
 			assertNotNull(createdUser);
 			assertEquals(request.name(), createdUser.getName());
@@ -89,11 +90,11 @@ class UserServiceTest {
 			User user = UserFactory.build();
 			user.setName(oldName);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			userService.updateUserName(user.getId(), updatedName);
 
-			verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getName().equals(updatedName)));
+			verify(userRepositoryPort).saveUser(argThat(updatedUser -> updatedUser.getName().equals(updatedName)));
 		}
 
 		@Test
@@ -105,11 +106,11 @@ class UserServiceTest {
 			User user = UserFactory.build();
 			user.setPassword(oldPassword);
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			userService.updatedUserPassword(user.getId(), updatedPassword);
 
-			verify(userRepository).saveUser(argThat(updatedUser -> updatedUser.getPassword().equals(updatedPassword)));
+			verify(userRepositoryPort).saveUser(argThat(updatedUser -> updatedUser.getPassword().equals(updatedPassword)));
 		}
 
 		@Test
@@ -119,7 +120,7 @@ class UserServiceTest {
 
 			User user = UserFactory.build();
 
-			when(userRepository.findUserById(user.getId())).thenReturn(Optional.of(user));
+			when(userRepositoryPort.findUserById(user.getId())).thenReturn(Optional.of(user));
 
 			Address updatedAddress = userService.updateUserAddress(user.getId(), updateAddressRequest);
 
@@ -129,7 +130,7 @@ class UserServiceTest {
 			assertEquals(updateAddressRequest.zipCode(), updatedAddress.getZipCode());
 			assertEquals(updateAddressRequest.country(), updatedAddress.getCountry());
 
-			verify(userRepository).saveUser(user);
+			verify(userRepositoryPort).saveUser(user);
 		}
 
 	}

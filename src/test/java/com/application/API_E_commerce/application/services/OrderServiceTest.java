@@ -1,22 +1,23 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.PaymentUseCases;
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
-import com.application.API_E_commerce.application.usecases.StockUseCases;
-import com.application.API_E_commerce.application.usecases.UserUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.address.Address;
 import com.application.API_E_commerce.domain.order.Order;
-import com.application.API_E_commerce.domain.order.OrderRepository;
 import com.application.API_E_commerce.domain.order.OrderStatus;
-import com.application.API_E_commerce.domain.order.dtos.CreateOrderCheckoutDTO;
 import com.application.API_E_commerce.domain.order.orderitem.OrderItem;
+import com.application.API_E_commerce.domain.order.repository.OrderRepositoryPort;
+import com.application.API_E_commerce.domain.order.services.OrderService;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
-import com.application.API_E_commerce.domain.payment.PaymentRepository;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
+import com.application.API_E_commerce.domain.payment.repository.PaymentRepositoryPort;
+import com.application.API_E_commerce.domain.payment.useCase.PaymentUseCase;
 import com.application.API_E_commerce.domain.product.Product;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
+import com.application.API_E_commerce.domain.stock.useCase.StockUseCase;
 import com.application.API_E_commerce.domain.user.User;
 import com.application.API_E_commerce.domain.user.UserRole;
+import com.application.API_E_commerce.domain.user.useCase.UserUseCase;
 import com.application.API_E_commerce.infrastructure.exceptions.order.EmptyOrderException;
 import com.application.API_E_commerce.infrastructure.exceptions.order.OrderNotFoundException;
 import com.stripe.exception.StripeException;
@@ -41,25 +42,25 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
 	@InjectMocks
-	OrderServiceImplementation orderService;
+	OrderService orderService;
 
 	@Mock
-	OrderRepository orderRepository;
+	OrderRepositoryPort orderRepositoryPort;
 
 	@Mock
-	ProductUseCases productService;
+	ProductUseCase productService;
 
 	@Mock
-	UserUseCases userService;
+	UserUseCase userService;
 
 	@Mock
-	PaymentUseCases paymentService;
+	PaymentUseCase paymentService;
 
 	@Mock
-	PaymentRepository paymentRepository;
+	PaymentRepositoryPort paymentRepositoryPort;
 
 	@Mock
-	StockUseCases stockService;
+	StockUseCase stockService;
 
 	private User mockUserFactory () {
 		User user = new User();
@@ -132,7 +133,7 @@ class OrderServiceTest {
 			mockOrder.setStatus(OrderStatus.PENDING);
 			mockOrder.setTotalValue(BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice()));
 
-			when(orderRepository.saveOrder(any(Order.class))).thenReturn(mockOrder);
+			when(orderRepositoryPort.saveOrder(any(Order.class))).thenReturn(mockOrder);
 
 			Order order = orderService.createOrderCheckout(request);
 
@@ -176,7 +177,7 @@ class OrderServiceTest {
 			mockOrder.setStatus(OrderStatus.PENDING);
 			mockOrder.setTotalValue(BigDecimal.valueOf(orderItem.getQuantity()).multiply(product.getPrice()));
 
-			when(orderRepository.saveOrder(any(Order.class))).thenReturn(mockOrder);
+			when(orderRepositoryPort.saveOrder(any(Order.class))).thenReturn(mockOrder);
 			doThrow(new IllegalArgumentException("Invalid quantity")).when(stockService)
 					.decreaseProductStock(product.getId(), orderItem.getQuantity());
 
@@ -208,7 +209,7 @@ class OrderServiceTest {
 		@Test
 		void shouldFetchAllOrderHistorySuccessfully () {
 			List<Order> expectedOrders = List.of(mockOrder(), mockOrder());
-			when(orderRepository.findAllOrders()).thenReturn(expectedOrders);
+			when(orderRepositoryPort.findAllOrders()).thenReturn(expectedOrders);
 
 			List<Order> orders = orderService.fetchAllOrderHistory();
 
@@ -225,13 +226,13 @@ class OrderServiceTest {
 		void shouldCancelOrderWhenOrderExists () {
 			Order mockOrder = mockOrder();
 			UUID orderId = mockOrder.getId();
-			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
+			when(orderRepositoryPort.findOrderById(orderId)).thenReturn(Optional.of(mockOrder));
 
 			orderService.cancelOrder(orderId);
 
-			verify(orderRepository).deleteOrder(orderId);
-			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
-			Optional<Order> deletedOrder = orderRepository.findOrderById(orderId);
+			verify(orderRepositoryPort).deleteOrder(orderId);
+			when(orderRepositoryPort.findOrderById(orderId)).thenReturn(Optional.empty());
+			Optional<Order> deletedOrder = orderRepositoryPort.findOrderById(orderId);
 			assertTrue(deletedOrder.isEmpty(), "The order still exists after cancellation!");
 			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
@@ -239,12 +240,12 @@ class OrderServiceTest {
 		@Test
 		void shouldThrowExceptionWhenOrderDoesNotExist () {
 			UUID orderId = UUID.randomUUID();
-			when(orderRepository.findOrderById(orderId)).thenReturn(Optional.empty());
+			when(orderRepositoryPort.findOrderById(orderId)).thenReturn(Optional.empty());
 
 			OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
 					() -> orderService.cancelOrder(orderId));
 			assertEquals("Order cannot be null.", exception.getMessage());
-			verify(orderRepository, never()).deleteOrder(any());
+			verify(orderRepositoryPort, never()).deleteOrder(any());
 			verify(stockService, never()).decreaseProductStock(any(), anyInt());
 		}
 

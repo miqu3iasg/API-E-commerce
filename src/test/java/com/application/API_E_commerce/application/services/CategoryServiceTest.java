@@ -1,8 +1,9 @@
 package com.application.API_E_commerce.application.services;
 
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateCategoryRequestDTO;
 import com.application.API_E_commerce.domain.category.Category;
-import com.application.API_E_commerce.domain.category.CategoryRepository;
-import com.application.API_E_commerce.domain.category.dtos.CreateCategoryRequestDTO;
+import com.application.API_E_commerce.domain.category.repository.CategoryRepositoryPort;
+import com.application.API_E_commerce.domain.category.services.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,48 +14,51 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class CategoryServiceTest {
-  @InjectMocks
-  private CategoryServiceImplementation categoryService;
+class CategoryServiceTest {
 
-  @Mock
-  private CategoryRepository categoryRepository;
+	@InjectMocks
+	private CategoryService categoryService;
 
-  @Test
-  void shouldCreateCategoryWithValidRequestSuccessfully() {
-    CreateCategoryRequestDTO createCategoryRequest = new CreateCategoryRequestDTO("Category name", "Category Description");
+	@Mock
+	private CategoryRepositoryPort categoryRepositoryPort;
 
-    Category mockCategory = new Category();
-    mockCategory.setId(UUID.randomUUID());
-    mockCategory.setName(createCategoryRequest.name());
-    mockCategory.setDescription(createCategoryRequest.description());
+	@Test
+	void shouldCreateCategoryWithValidRequestSuccessfully () {
+		CreateCategoryRequestDTO createCategoryRequest = new CreateCategoryRequestDTO("Category name", "Category Description");
 
-    when(categoryRepository.saveCategory(any(Category.class))).thenReturn(mockCategory);
-    when(categoryRepository.findCategoryById(mockCategory.getId())).thenReturn(Optional.of(mockCategory));
+		Category mockCategory = new Category();
+		mockCategory.setId(UUID.randomUUID());
+		mockCategory.setName(createCategoryRequest.name());
+		mockCategory.setDescription(createCategoryRequest.description());
 
-    Category category = categoryService.createCategory(createCategoryRequest);
+		when(categoryRepositoryPort.saveCategory(any(Category.class))).thenReturn(mockCategory);
+		when(categoryRepositoryPort.findCategoryById(mockCategory.getId())).thenReturn(Optional.of(mockCategory));
 
-    log.info("Category Id {}, category name {} and category description {}.",
-            category.getId(),
-            category.getName(),
-            category.getDescription()
-    );
+		Category category = categoryService.createCategory(createCategoryRequest);
 
-    assertNotNull(category.getId());
-    assertNotNull(category.getName());
-    assertNotNull(category.getDescription());
+		log.info("Category Id {}, category name {} and category description {}.",
+				category.getId(),
+				category.getName(),
+				category.getDescription()
+		);
 
-    Category savedCategory = categoryRepository.findCategoryById(category.getId()).orElse(null);
+		assertNotNull(category.getId());
+		assertNotNull(category.getName());
+		assertNotNull(category.getDescription());
 
-    assertNotNull(savedCategory);
-    assertEquals(savedCategory.getId(), category.getId());
-    assertEquals(savedCategory.getName(), category.getName());
-    assertEquals(savedCategory.getDescription(), category.getDescription());
-  }
+		Category savedCategory = categoryRepositoryPort.findCategoryById(category.getId()).orElse(null);
+
+		assertNotNull(savedCategory);
+		assertEquals(savedCategory.getId(), category.getId());
+		assertEquals(savedCategory.getName(), category.getName());
+		assertEquals(savedCategory.getDescription(), category.getDescription());
+	}
+
 }

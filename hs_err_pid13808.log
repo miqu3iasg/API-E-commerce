@@ -543,7 +543,7 @@ Classes unloaded (1 events):
 Event: 10.183 Thread 0x0000020f4dd8c890 Unloading class 0x0000020f01203000 'net/bytebuddy/mirror/AccessibleObject'
 
 Classes redefined (1 events):
-Event: 3.853 Thread 0x0000020f4dd8c890 redefined class name=com.application.API_E_commerce.domain.category.CategoryRepository, count=1
+Event: 3.853 Thread 0x0000020f4dd8c890 redefined class name=com.application.API_E_commerce.domain.category.ports.repository.CategoryRepositoryPort, count=1
 
 Internal exceptions (20 events):
 Event: 16.327 Thread 0x0000020f4dcc8f20 Exception <a 'java/lang/NoSuchMethodError'{0x00000000c6f878f0}: 'void java.lang.invoke.DirectMethodHandle$Holder.invokeSpecial(java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object)'> (0x00000000c6f878f0) 

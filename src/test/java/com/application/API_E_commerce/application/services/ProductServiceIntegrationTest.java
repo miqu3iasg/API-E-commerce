@@ -1,14 +1,15 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.CategoryUseCases;
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateCategoryRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateProductRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.UpdateProductRequestDTO;
 import com.application.API_E_commerce.domain.category.Category;
-import com.application.API_E_commerce.domain.category.CategoryRepository;
-import com.application.API_E_commerce.domain.category.dtos.CreateCategoryRequestDTO;
+import com.application.API_E_commerce.domain.category.repository.CategoryRepositoryPort;
+import com.application.API_E_commerce.domain.category.useCase.CategoryUseCase;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
-import com.application.API_E_commerce.domain.product.dtos.UpdateProductRequestDTO;
-import com.application.API_E_commerce.domain.product.repository.ProductRepository;
+import com.application.API_E_commerce.domain.product.repository.ProductRepositoryPort;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
+import com.application.API_E_commerce.domain.stock.services.StockService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,19 +35,19 @@ class ProductServiceIntegrationTest {
 	private static final Logger log = LoggerFactory.getLogger(ProductServiceIntegrationTest.class);
 
 	@Autowired
-	ProductRepository productRepository;
+	ProductRepositoryPort productRepositoryPort;
 
 	@Autowired
-	CategoryRepository categoryRepository;
+	CategoryRepositoryPort categoryRepositoryPort;
 
 	@Autowired
-	ProductUseCases productService;
+	ProductUseCase productService;
 
 	@Autowired
-	CategoryUseCases categoryService;
+	CategoryUseCase categoryService;
 
 	@Autowired
-	StockServiceImplementation stockService;
+	StockService stockService;
 
 	private CreateProductRequestDTO createProductRequestFactory () {
 		return new CreateProductRequestDTO(
@@ -79,7 +80,7 @@ class ProductServiceIntegrationTest {
 			assertEquals(BigDecimal.valueOf(20.0), product.getPrice(), "The product price is incorrect");
 			assertEquals(10, product.getStock(), "The product stock is incorrect");
 
-			Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			Product savedProduct = productRepositoryPort.findProductById(product.getId()).orElse(null);
 			assertNotNull(savedProduct, "The product should be saved in the database");
 			assertEquals(product.getId(), savedProduct.getId(), "The product ID should match");
 			assertEquals(product.getName(), savedProduct.getName(), "The product name should match");
@@ -101,7 +102,7 @@ class ProductServiceIntegrationTest {
 
 			product.setImagesUrl(List.of("image1.jpg", "image2.jpg"));
 
-			productRepository.saveProduct(product);
+			productRepositoryPort.saveProduct(product);
 
 			List<String> images = productService.getProductImages(product.getId());
 
@@ -136,7 +137,7 @@ class ProductServiceIntegrationTest {
 
 			productService.updateProduct(product.getId(), updateProductRequest);
 
-			Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			Product updatedProduct = productRepositoryPort.findProductById(product.getId()).orElse(null);
 			assertNotNull(updatedProduct, "The updated product should not be null");
 			assertEquals("Updated Name", updatedProduct.getName(), "The product name should be updated");
 			assertEquals("Updated Description", updatedProduct.getDescription(), "The product description should be updated");
@@ -160,15 +161,15 @@ class ProductServiceIntegrationTest {
 
 			log.info("Product {} and category {} created successfully.", product.getId(), category.getId());
 
-			Product createdProduct = productRepository.findProductById(product.getId()).orElse(null);
+			Product createdProduct = productRepositoryPort.findProductById(product.getId()).orElse(null);
 			assertNotNull(createdProduct, "The created product should not be null");
 
-			Category createdCategory = categoryRepository.findCategoryById(category.getId()).orElse(null);
+			Category createdCategory = categoryRepositoryPort.findCategoryById(category.getId()).orElse(null);
 			assertNotNull(createdCategory, "The created category should not be null");
 
 			productService.associateProductToCategory(createdProduct.getId(), createdCategory.getId());
 
-			Product savedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			Product savedProduct = productRepositoryPort.findProductById(product.getId()).orElse(null);
 			assertNotNull(savedProduct, "The product should be saved in the database");
 			assertEquals(category.getId(), savedProduct.getCategory().getId(), "The product category should match");
 		}
@@ -218,7 +219,7 @@ class ProductServiceIntegrationTest {
 
 			assertNull(productWithoutCategory.getCategory(), "The product should have been removed from the category");
 
-			Product updatedProduct = productRepository.findProductById(product.getId()).orElse(null);
+			Product updatedProduct = productRepositoryPort.findProductById(product.getId()).orElse(null);
 			assertNotNull(updatedProduct, "The updated product should not be null");
 			assertNull(updatedProduct.getCategory(), "The product should no longer have a category");
 		}

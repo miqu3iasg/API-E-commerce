@@ -1,8 +1,8 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.PaymentUseCases;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
+import com.application.API_E_commerce.domain.payment.useCase.PaymentUseCase;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.CreatingCheckoutSessionException;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.InvalidAmountException;
 import com.stripe.Stripe;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PaymentIntegrationTest {
 
 	@Autowired
-	PaymentUseCases paymentService;
+	PaymentUseCase paymentService;
 
 	private Payment validPayment () {
 		Payment payment = new Payment();

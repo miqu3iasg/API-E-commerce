@@ -1,7 +1,7 @@
 package com.application.API_E_commerce.adapters.outbound.messaging;
 
-import com.application.API_E_commerce.domain.product.dtos.StockUpdateEvent;
-import com.application.API_E_commerce.port.outbound.StockUpdatePort;
+import com.application.API_E_commerce.adapters.inbound.dtos.StockUpdateEvent;
+import com.application.API_E_commerce.domain.stock.StockUpdatePort;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 

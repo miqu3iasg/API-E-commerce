@@ -1,9 +1,9 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateProductRequestDTO;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
-import com.application.API_E_commerce.domain.product.repository.ProductRepository;
+import com.application.API_E_commerce.domain.product.repository.ProductRepositoryPort;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class UploadImageToCloudinaryIntegrationTest {
 
 	@Autowired
-	private ProductRepository productRepository;
+	private ProductRepositoryPort productRepositoryPort;
 
 	@Autowired
-	private ProductUseCases productService;
+	private ProductUseCase productService;
 
 	@Test
 	void shouldUploadImageToCloudinaryAndUpdateProduct () throws IOException {
@@ -47,7 +47,7 @@ class UploadImageToCloudinaryIntegrationTest {
 
 		productService.uploadProductImage(productId, testImages);
 
-		Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
+		Product updatedProduct = productRepositoryPort.findProductById(productId).orElseThrow();
 
 		assertNotNull(updatedProduct.getImagesUrl(), "Image URL list should not be null");
 		assertEquals(2, updatedProduct.getImagesUrl().size(), "Product should have two images");

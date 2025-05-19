@@ -1,10 +1,10 @@
 package com.application.API_E_commerce.adapters.outbound.repositories;
 
 import com.application.API_E_commerce.adapters.outbound.entities.cart.JpaCartItemEntity;
+import com.application.API_E_commerce.adapters.outbound.repositories.jpa.JpaCartItemRepository;
+import com.application.API_E_commerce.common.utils.mappers.CartItemMapper;
 import com.application.API_E_commerce.domain.cart.cartitem.CartItem;
-import com.application.API_E_commerce.domain.cart.cartitem.CartItemRepository;
-import com.application.API_E_commerce.utils.mappers.CartItemMapper;
-import jakarta.transaction.Transactional;
+import com.application.API_E_commerce.domain.cart.cartitem.repository.CartItemRepositoryPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -13,52 +13,57 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-public class CartItemRepositoryImplementation implements CartItemRepository {
-  private final JpaCartItemRepository jpaCartItemRepository;
-  private final CartItemMapper cartItemMapper;
+public class CartItemRepositoryImplementation implements CartItemRepositoryPort {
 
-  public CartItemRepositoryImplementation(JpaCartItemRepository jpaCartItemRepository, CartItemMapper cartItemMapper) {
-    this.jpaCartItemRepository = jpaCartItemRepository;
-    this.cartItemMapper = cartItemMapper;
-  }
+	private final JpaCartItemRepository jpaCartItemRepository;
+	private final CartItemMapper cartItemMapper;
 
-  @Override
-  public CartItem saveCartItem(CartItem cartItem) {
-    JpaCartItemEntity jpaCartItemToSave = cartItemMapper.toJpa(cartItem);
+	public CartItemRepositoryImplementation (JpaCartItemRepository jpaCartItemRepository, CartItemMapper cartItemMapper) {
+		this.jpaCartItemRepository = jpaCartItemRepository;
+		this.cartItemMapper = cartItemMapper;
+	}
 
-    JpaCartItemEntity jpaCartItemSaved = jpaCartItemRepository.save(jpaCartItemToSave);
+	@Override
+	public CartItem saveCartItem (CartItem cartItem) {
+		JpaCartItemEntity jpaCartItemToSave = cartItemMapper.toJpa(cartItem);
 
-    return cartItemMapper.toDomain(jpaCartItemSaved);
-  }
+		JpaCartItemEntity jpaCartItemSaved = jpaCartItemRepository.save(jpaCartItemToSave);
 
-  @Override
-  public void deleteCartItem(CartItem cartItem) {
-    if (cartItem.getId() == null) throw new IllegalArgumentException("Cart item id cannot be null.");
+		return cartItemMapper.toDomain(jpaCartItemSaved);
+	}
 
-    jpaCartItemRepository.findById(cartItem.getId())
-            .map(existingJpaCartItem -> {
-              jpaCartItemRepository.delete(existingJpaCartItem);
-              return existingJpaCartItem;
-            }).orElseThrow(() -> new IllegalArgumentException("Cart item was not found."));
-  }
+	@Override
+	public void deleteCartItem (CartItem cartItem) {
+		if (cartItem.getId() == null)
+			throw new IllegalArgumentException("Cart item id cannot be null.");
 
-  @Override
-  public Optional<CartItem> findCartItemById(UUID cartItemId) {
-    if (cartItemId == null) throw new IllegalArgumentException("Cart item id cannot be null.");
+		jpaCartItemRepository.findById(cartItem.getId())
+				.map(existingJpaCartItem -> {
+					jpaCartItemRepository.delete(existingJpaCartItem);
+					return existingJpaCartItem;
+				}).orElseThrow(() -> new IllegalArgumentException("Cart item was not found."));
+	}
 
-    return Optional.ofNullable(jpaCartItemRepository.findById(cartItemId)
-            .map(cartItemMapper::toDomain)
-            .orElseThrow(() -> new IllegalArgumentException("Cart item was not found.")));
-  }
+	@Override
+	public Optional<CartItem> findCartItemById (UUID cartItemId) {
+		if (cartItemId == null)
+			throw new IllegalArgumentException("Cart item id cannot be null.");
 
-  @Override
-  public void deleteCartItemById(UUID cartItemId) {
-    if (cartItemId == null) throw new IllegalArgumentException("Cart item id cannot be null.");
+		return Optional.ofNullable(jpaCartItemRepository.findById(cartItemId)
+				.map(cartItemMapper::toDomain)
+				.orElseThrow(() -> new IllegalArgumentException("Cart item was not found.")));
+	}
 
-    jpaCartItemRepository.findById(cartItemId)
-            .map(existingJpaCartItem -> {
-              jpaCartItemRepository.delete(existingJpaCartItem);
-              return existingJpaCartItem;
-            }).orElseThrow(() -> new IllegalArgumentException("Cart item was not found."));
-  }
+	@Override
+	public void deleteCartItemById (UUID cartItemId) {
+		if (cartItemId == null)
+			throw new IllegalArgumentException("Cart item id cannot be null.");
+
+		jpaCartItemRepository.findById(cartItemId)
+				.map(existingJpaCartItem -> {
+					jpaCartItemRepository.delete(existingJpaCartItem);
+					return existingJpaCartItem;
+				}).orElseThrow(() -> new IllegalArgumentException("Cart item was not found."));
+	}
+
 }

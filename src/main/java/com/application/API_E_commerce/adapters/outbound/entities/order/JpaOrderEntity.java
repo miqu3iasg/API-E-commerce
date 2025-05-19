@@ -4,12 +4,8 @@ import com.application.API_E_commerce.adapters.outbound.entities.payment.JpaPaym
 import com.application.API_E_commerce.adapters.outbound.entities.user.JpaUserEntity;
 import com.application.API_E_commerce.domain.order.Order;
 import com.application.API_E_commerce.domain.order.OrderStatus;
-import com.application.API_E_commerce.utils.mappers.OrderMapper;
-import com.application.API_E_commerce.utils.mappers.PaymentMapper;
-import com.application.API_E_commerce.utils.mappers.UserMapper;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -22,118 +18,119 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JpaOrderEntity {
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private UUID id;
 
-  @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
-  private JpaUserEntity user;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private UUID id;
 
-  private OrderStatus status;
+	@ManyToOne
+	@JoinColumn(name = "user_id", nullable = false)
+	private JpaUserEntity user;
 
-  private LocalDateTime orderDate;
+	private OrderStatus status;
 
-  private BigDecimal totalValue;
+	private LocalDateTime orderDate;
 
-  private String currency;
+	private BigDecimal totalValue;
 
-  private String description;
+	private String currency;
 
-  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<JpaOrderItemEntity> items;
+	private String description;
 
-  @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-  private JpaPaymentEntity payment;
+	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<JpaOrderItemEntity> items;
 
-  public static JpaOrderEntity fromDomain (
-          Order orderDomain,
-          JpaUserEntity jpaUserEntity,
-          List<JpaOrderItemEntity> jpaOrderItemEntities,
-          JpaPaymentEntity jpaPaymentEntity
-  ) {
-    JpaOrderEntity jpaOrderEntity = new JpaOrderEntity();
-    jpaOrderEntity.id = orderDomain.getId();
-    jpaOrderEntity.user = jpaUserEntity;
-    jpaOrderEntity.status = orderDomain.getStatus();
-    jpaOrderEntity.orderDate = orderDomain.getOrderDate();
-    jpaOrderEntity.totalValue = orderDomain.getTotalValue();
-    jpaOrderEntity.items = jpaOrderItemEntities;
-    jpaOrderEntity.payment = jpaPaymentEntity;
+	@OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+	private JpaPaymentEntity payment;
 
-    return jpaOrderEntity;
-  }
+	public static JpaOrderEntity fromDomain (
+			Order orderDomain,
+			JpaUserEntity jpaUserEntity,
+			List<JpaOrderItemEntity> jpaOrderItemEntities,
+			JpaPaymentEntity jpaPaymentEntity
+	) {
+		JpaOrderEntity jpaOrderEntity = new JpaOrderEntity();
+		jpaOrderEntity.id = orderDomain.getId();
+		jpaOrderEntity.user = jpaUserEntity;
+		jpaOrderEntity.status = orderDomain.getStatus();
+		jpaOrderEntity.orderDate = orderDomain.getOrderDate();
+		jpaOrderEntity.totalValue = orderDomain.getTotalValue();
+		jpaOrderEntity.items = jpaOrderItemEntities;
+		jpaOrderEntity.payment = jpaPaymentEntity;
 
-  public UUID getId() {
-    return id;
-  }
+		return jpaOrderEntity;
+	}
 
-  public void setId(UUID id) {
-    this.id = id;
-  }
+	public UUID getId () {
+		return id;
+	}
 
-  public JpaUserEntity getUser() {
-    return user;
-  }
+	public void setId (UUID id) {
+		this.id = id;
+	}
 
-  public void setUser(JpaUserEntity user) {
-    this.user = user;
-  }
+	public JpaUserEntity getUser () {
+		return user;
+	}
 
-  public OrderStatus getStatus() {
-    return status;
-  }
+	public void setUser (JpaUserEntity user) {
+		this.user = user;
+	}
 
-  public void setStatus(OrderStatus status) {
-    this.status = status;
-  }
+	public OrderStatus getStatus () {
+		return status;
+	}
 
-  public LocalDateTime getOrderDate() {
-    return orderDate;
-  }
+	public void setStatus (OrderStatus status) {
+		this.status = status;
+	}
 
-  public void setOrderDate(LocalDateTime orderDate) {
-    this.orderDate = orderDate;
-  }
+	public LocalDateTime getOrderDate () {
+		return orderDate;
+	}
 
-  public BigDecimal getTotalValue() {
-    return totalValue;
-  }
+	public void setOrderDate (LocalDateTime orderDate) {
+		this.orderDate = orderDate;
+	}
 
-  public void setTotalValue(BigDecimal totalValue) {
-    this.totalValue = totalValue;
-  }
+	public BigDecimal getTotalValue () {
+		return totalValue;
+	}
 
-  public List<JpaOrderItemEntity> getItems() {
-    return items;
-  }
+	public void setTotalValue (BigDecimal totalValue) {
+		this.totalValue = totalValue;
+	}
 
-  public void setItems(List<JpaOrderItemEntity> items) {
-    this.items = items;
-  }
+	public List<JpaOrderItemEntity> getItems () {
+		return items;
+	}
 
-  public JpaPaymentEntity getPayment() {
-    return payment;
-  }
+	public void setItems (List<JpaOrderItemEntity> items) {
+		this.items = items;
+	}
 
-  public void setPayment(JpaPaymentEntity payment) {
-    this.payment = payment;
-  }
+	public JpaPaymentEntity getPayment () {
+		return payment;
+	}
 
-  public String getCurrency () {
-    return currency;
-  }
+	public void setPayment (JpaPaymentEntity payment) {
+		this.payment = payment;
+	}
 
-  public void setCurrency ( String currency ) {
-    this.currency = currency;
-  }
+	public String getCurrency () {
+		return currency;
+	}
 
-  public String getDescription () {
-    return description;
-  }
+	public void setCurrency (String currency) {
+		this.currency = currency;
+	}
 
-  public void setDescription ( String description ) {
-    this.description = description;
-  }
+	public String getDescription () {
+		return description;
+	}
+
+	public void setDescription (String description) {
+		this.description = description;
+	}
 
 }

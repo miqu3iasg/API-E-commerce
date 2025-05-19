@@ -1,10 +1,11 @@
 package com.application.API_E_commerce.application.services;
 
-import com.application.API_E_commerce.application.usecases.ProductUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateProductRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.StockUpdateEvent;
 import com.application.API_E_commerce.domain.product.Product;
-import com.application.API_E_commerce.domain.product.dtos.CreateProductRequestDTO;
-import com.application.API_E_commerce.domain.product.dtos.StockUpdateEvent;
-import com.application.API_E_commerce.domain.product.repository.ProductRepository;
+import com.application.API_E_commerce.domain.product.repository.ProductRepositoryPort;
+import com.application.API_E_commerce.domain.product.useCase.ProductUseCase;
+import com.application.API_E_commerce.domain.stock.services.StockService;
 import com.application.API_E_commerce.infrastructure.configuration.RabbitMQConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,13 +39,13 @@ class StockIntegrationTest {
 			.withExposedPorts(5672, 15672);
 
 	@Autowired
-	StockServiceImplementation stockService;
+	StockService stockService;
 
 	@Autowired
-	ProductRepository productRepository;
+	ProductRepositoryPort productRepositoryPort;
 
 	@Autowired
-	ProductUseCases productService;
+	ProductUseCase productService;
 
 	@Autowired
 	RabbitTemplate rabbitTemplate;
@@ -82,7 +83,7 @@ class StockIntegrationTest {
 
 		TimeUnit.SECONDS.sleep(2);
 
-		Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
+		Product updatedProduct = productRepositoryPort.findProductById(productId).orElseThrow();
 		int finalStock = updatedProduct.getStock();
 		int expectedStock = initialStock + quantityToIncrease;
 		assertEquals(expectedStock, finalStock, "Stock should be increased by " + quantityToIncrease);
@@ -107,7 +108,7 @@ class StockIntegrationTest {
 
 		TimeUnit.SECONDS.sleep(2);
 
-		Product updatedProduct = productRepository.findProductById(productId).orElseThrow();
+		Product updatedProduct = productRepositoryPort.findProductById(productId).orElseThrow();
 		int finalStock = updatedProduct.getStock();
 		int expectedStock = initialStock - quantityToDecrease;
 		assertEquals(expectedStock, finalStock, "Stock should be decreased by " + quantityToDecrease);
@@ -120,7 +121,7 @@ class StockIntegrationTest {
 		product.setDescription("Description");
 		product.setPrice(BigDecimal.valueOf(100.0));
 		product.setStock(10);
-		productRepository.saveProduct(product);
+		productRepositoryPort.saveProduct(product);
 		return product;
 	}
 
@@ -158,7 +159,7 @@ class StockIntegrationTest {
 		assertEquals(StockUpdateEvent.OperationType.DECREASE, event.operation());
 		assertNotNull(event.correlationId(), "Correlation id should not be null");
 
-		Product unchangedProduct = productRepository.findProductById(productId).orElseThrow();
+		Product unchangedProduct = productRepositoryPort.findProductById(productId).orElseThrow();
 		assertEquals(product.getStock(), unchangedProduct.getStock(),
 				"Stock should not change due to insufficient stock");
 	}
@@ -204,7 +205,7 @@ class StockIntegrationTest {
 		assertEquals(StockUpdateEvent.OperationType.INCREASE, dlqEvent.operation());
 		assertEquals(correlationId, dlqEvent.correlationId());
 
-		Product unchangedProduct = productRepository.findProductById(productId).orElseThrow();
+		Product unchangedProduct = productRepositoryPort.findProductById(productId).orElseThrow();
 		assertEquals(product.getStock(), unchangedProduct.getStock(),
 				"Stock should not change due to invalid quantity");
 	}

@@ -1,11 +1,11 @@
 package com.application.API_E_commerce.adapters.inbound.controllers;
 
-import com.application.API_E_commerce.application.usecases.CategoryUseCases;
+import com.application.API_E_commerce.adapters.inbound.dtos.CategoryResponseDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.CreateCategoryRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.ProductResponseDTO;
+import com.application.API_E_commerce.common.response.ApiResponse;
 import com.application.API_E_commerce.domain.category.Category;
-import com.application.API_E_commerce.domain.category.dtos.CategoryResponseDTO;
-import com.application.API_E_commerce.domain.category.dtos.CreateCategoryRequestDTO;
-import com.application.API_E_commerce.domain.product.dtos.ProductResponseDTO;
-import com.application.API_E_commerce.response.ApiResponse;
+import com.application.API_E_commerce.domain.category.useCase.CategoryUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -26,9 +26,9 @@ import java.util.UUID;
 @Tag(name = "Category", description = "Operations pertaining to category management")
 public class CategoryController {
 
-	private final CategoryUseCases categoryService;
+	private final CategoryUseCase categoryService;
 
-	public CategoryController (CategoryUseCases categoryService) {
+	public CategoryController (CategoryUseCase categoryService) {
 		this.categoryService = categoryService;
 	}
 

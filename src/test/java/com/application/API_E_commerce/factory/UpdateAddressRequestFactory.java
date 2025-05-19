@@ -1,15 +1,17 @@
 package com.application.API_E_commerce.factory;
 
-import com.application.API_E_commerce.domain.address.dtos.UpdateAddressRequestDTO;
+import com.application.API_E_commerce.adapters.inbound.dtos.UpdateAddressRequestDTO;
 
 public class UpdateAddressRequestFactory {
-  public static UpdateAddressRequestDTO build() {
-    return new UpdateAddressRequestDTO(
-            "New Street",
-            "New City",
-            "New State",
-            "54321",
-            "New Country"
-    );
-  }
+
+	public static UpdateAddressRequestDTO build () {
+		return new UpdateAddressRequestDTO(
+				"New Street",
+				"New City",
+				"New State",
+				"54321",
+				"New Country"
+		);
+	}
+
 }
