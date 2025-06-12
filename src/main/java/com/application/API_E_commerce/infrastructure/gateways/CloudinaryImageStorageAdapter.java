@@ -6,7 +6,6 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.cloudinary.utils.StringUtils;
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @Component
 public class CloudinaryImageStorageAdapter implements ImageStorageGateway {
 

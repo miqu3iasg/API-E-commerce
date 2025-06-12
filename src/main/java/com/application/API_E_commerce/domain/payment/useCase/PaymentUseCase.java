@@ -10,4 +10,6 @@ public interface PaymentUseCase {
 
 	String createCheckoutSession (Payment payment) throws StripeException;
 
+	PaymentIntent confirmPayment (String paymentIntentId, String paymentMethodId);
+
 }

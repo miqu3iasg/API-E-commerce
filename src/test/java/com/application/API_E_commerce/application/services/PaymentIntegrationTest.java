@@ -1,7 +1,10 @@
 package com.application.API_E_commerce.application.services;
 
+import com.application.API_E_commerce.domain.order.useCase.OrderUseCase;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentMethod;
+import com.application.API_E_commerce.domain.payment.PaymentStatus;
+import com.application.API_E_commerce.domain.payment.repository.PaymentRepositoryPort;
 import com.application.API_E_commerce.domain.payment.useCase.PaymentUseCase;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.CreatingCheckoutSessionException;
 import com.application.API_E_commerce.infrastructure.exceptions.payment.InvalidAmountException;
@@ -26,12 +29,19 @@ class PaymentIntegrationTest {
 	@Autowired
 	PaymentUseCase paymentService;
 
+	@Autowired
+	PaymentRepositoryPort paymentRepository;
+
+	@Autowired
+	OrderUseCase orderService;
+
 	private Payment validPayment () {
 		Payment payment = new Payment();
 		payment.setAmountInCents(5000L); // R$50,00
 		payment.setCurrency("BRL");
 		payment.setDescription("Test payment.");
 		payment.setPaymentMethod(PaymentMethod.CARD);
+		payment.setStatus(PaymentStatus.PENDING);
 		return payment;
 	}
 

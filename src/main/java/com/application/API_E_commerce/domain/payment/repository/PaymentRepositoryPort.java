@@ -15,4 +15,6 @@ public interface PaymentRepositoryPort {
 
 	void deletePayment (UUID id);
 
+	void deleteAllPayments ();
+
 }

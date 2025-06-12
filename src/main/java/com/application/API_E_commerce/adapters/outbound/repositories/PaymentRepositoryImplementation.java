@@ -21,6 +21,7 @@ public class PaymentRepositoryImplementation implements PaymentRepositoryPort {
 		this.paymentMapper = paymentMapper;
 	}
 
+
 	@Override
 	public Optional<Payment> findPaymentById (UUID id) {
 		return Optional.ofNullable(jpaPaymentRepository.findById(id)
@@ -50,6 +51,12 @@ public class PaymentRepositoryImplementation implements PaymentRepositoryPort {
 					return existingPaymentEntity;
 				})
 				.orElseThrow(() -> new IllegalArgumentException("Payment was not found when searching for id in the delete product by id method."));
+	}
+
+
+	@Override
+	public void deleteAllPayments () {
+		jpaPaymentRepository.deleteAll();
 	}
 
 }

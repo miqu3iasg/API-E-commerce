@@ -16,98 +16,101 @@ import java.util.UUID;
 @NoArgsConstructor
 public class JpaPaymentEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private UUID id;
 
-  @OneToOne
-  @JoinColumn(name = "order_id", nullable = false)
-  private JpaOrderEntity order;
+	@OneToOne
+	@JoinColumn(name = "order_id", nullable = true)
+	private JpaOrderEntity order;
+	private PaymentMethod paymentMethod;
+	private String paymentMethodId;
+	private String paymentIntentId;
+	private String currency;
+	private Long amountInCents;
+	private String description;
+	@Enumerated(EnumType.STRING)
+	private PaymentStatus status;
+	private LocalDateTime paymentDate;
 
-  private PaymentMethod paymentMethod;
+	public UUID getId () {
+		return id;
+	}
 
-  private String paymentMethodId;
+	public void setId (UUID id) {
+		this.id = id;
+	}
 
-  private String currency;
+	public JpaOrderEntity getOrder () {
+		return order;
+	}
 
-  private Long amountInCents;
+	public void setOrder (JpaOrderEntity order) {
+		this.order = order;
+	}
 
-  private String description;
+	public PaymentMethod getPaymentMethod () {
+		return paymentMethod;
+	}
 
-  private PaymentStatus status;
+	public void setPaymentMethod (PaymentMethod paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
 
-  private LocalDateTime paymentDate;
+	public PaymentStatus getStatus () {
+		return status;
+	}
 
-  public UUID getId () {
-    return id;
-  }
+	public void setStatus (PaymentStatus status) {
+		this.status = status;
+	}
 
-  public void setId ( UUID id ) {
-    this.id = id;
-  }
+	public LocalDateTime getPaymentDate () {
+		return paymentDate;
+	}
 
-  public JpaOrderEntity getOrder () {
-    return order;
-  }
+	public void setPaymentDate (LocalDateTime paymentDate) {
+		this.paymentDate = paymentDate;
+	}
 
-  public void setOrder ( JpaOrderEntity order ) {
-    this.order = order;
-  }
+	public String getCurrency () {
+		return currency;
+	}
 
-  public PaymentMethod getPaymentMethod () {
-    return paymentMethod;
-  }
+	public void setCurrency (String currency) {
+		this.currency = currency;
+	}
 
-  public void setPaymentMethod ( PaymentMethod paymentMethod ) {
-    this.paymentMethod = paymentMethod;
-  }
+	public Long getAmountInCents () {
+		return amountInCents;
+	}
 
-  public PaymentStatus getStatus () {
-    return status;
-  }
+	public void setAmountInCents (Long amountInCents) {
+		this.amountInCents = amountInCents;
+	}
 
-  public void setStatus ( PaymentStatus status ) {
-    this.status = status;
-  }
+	public String getDescription () {
+		return description;
+	}
 
-  public LocalDateTime getPaymentDate () {
-    return paymentDate;
-  }
+	public void setDescription (String description) {
+		this.description = description;
+	}
 
-  public void setPaymentDate ( LocalDateTime paymentDate ) {
-    this.paymentDate = paymentDate;
-  }
+	public String getPaymentMethodId () {
+		return paymentMethodId;
+	}
 
-  public String getCurrency () {
-    return currency;
-  }
+	public void setPaymentMethodId (String paymentMethodId) {
+		this.paymentMethodId = paymentMethodId;
+	}
 
-  public void setCurrency ( String currency ) {
-    this.currency = currency;
-  }
+	public String getPaymentIntentId () {
+		return paymentIntentId;
+	}
 
-  public Long getAmountInCents () {
-    return amountInCents;
-  }
-
-  public void setAmountInCents ( Long amountInCents ) {
-    this.amountInCents = amountInCents;
-  }
-
-  public String getDescription () {
-    return description;
-  }
-
-  public void setDescription ( String description ) {
-    this.description = description;
-  }
-
-  public String getPaymentMethodId () {
-    return paymentMethodId;
-  }
-
-  public void setPaymentMethodId ( String paymentMethodId ) {
-    this.paymentMethodId = paymentMethodId;
-  }
+	public void setPaymentIntentId (String paymentIntentId) {
+		this.paymentIntentId = paymentIntentId;
+	}
 
 }
