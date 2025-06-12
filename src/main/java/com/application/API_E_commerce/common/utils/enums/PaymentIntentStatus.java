@@ -1,4 +1,4 @@
-package com.application.API_E_commerce.common.utils;
+package com.application.API_E_commerce.common.utils.enums;
 
 public enum PaymentIntentStatus {
 	REQUIRES_PAYMENT_METHOD("requires_payment_method"),

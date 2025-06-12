@@ -1,6 +1,6 @@
 package com.application.API_E_commerce.domain.payment.services;
 
-import com.application.API_E_commerce.common.utils.PaymentIntentStatus;
+import com.application.API_E_commerce.common.utils.enums.PaymentIntentStatus;
 import com.application.API_E_commerce.domain.payment.Payment;
 import com.application.API_E_commerce.domain.payment.PaymentStatus;
 import com.application.API_E_commerce.domain.payment.gateways.PaymentGatewayPort;
