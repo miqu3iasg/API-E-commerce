@@ -55,7 +55,7 @@ class StripeRefundProcessingIntegrationTest {
 	 * for the same payment.
 	 * <p>
 	 * If the test fails, replace the 'stripePaymentId' value with a new valid test PaymentIntent ID
-	 * that has not been refunded yet, available from your Stripe test dashboard.
+	 * that has not been refunded yet, available from your Stripe test dashboard
 	 */
 	@Test
 	void shouldProcessRefundSuccessfullyAndVerifyStripeStatus () {
