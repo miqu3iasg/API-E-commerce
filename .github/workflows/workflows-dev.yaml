@@ -2,9 +2,9 @@ name: CI/CD pipeline
 
 on:
   push:
-    branches: [ "main", "developer" ]
+    branches: [ ]
   pull_request:
-    branches: [ "main", "developer" ]
+    branches: [ ]
 
 jobs:
   continuous-integration:
